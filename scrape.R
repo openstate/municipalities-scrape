@@ -1,9 +1,10 @@
 ## LIBRARIES
-
 library(rvest)
 library(dplyr)
 library(Rcrawler)
 library(stringr)
+library(rjson)
+library(miceadds)
 
 ## SET WD
 setwd("/Users/Nele/Desktop/Internship/R/")
@@ -11,9 +12,8 @@ setwd("/Users/Nele/Desktop/Internship/R/")
 ## SET UTF
 Sys.setlocale(locale="UTF-8" )
 
-## load in data
-library(rjson)
-#gemeentes <- read.csv2("json")
+## read in data set from wd
+#gemeentes <- load.Rdata2("gemeentes", path=getwd())
 
 # EXTRACT MUNICIPALITY WEBSITES ----------------------------------------------------
 
@@ -61,33 +61,12 @@ gemeentes$V2 <- as.character(gemeentes$V2) # needed for next step
 # gemeentes[326,2] <- "https://www.westerkwartier.nl/home" # westerkwatier has a strange string as their website, so change it here by hand
 colnames(gemeentes) <- c("Gemeente", "Website")
 
+# municipalities where website or name is not registered right
 gemeentes$Gemeente <- as.character(gemeentes$Gemeente)
 gemeentes$Gemeente[32] <- "Bergen L" # bergen has their name double in their, causing the loop making the name 'L', here it is manually set to the right name
-
-# # EXTRACT INFORMATION FROM URLS -------------------------------------------
-# 
-# urls <- as.list(gemeentes$Website)
-# 
-# tbl_2 <- list()
-# j <- 1
-# for (j in seq_along(gemeentes$Website)) {
-#   
-#   naam <- urls[[j]] %>%   # tbl[[j]] assigns each table from the urls as an element in the tbl list
-#     read_html() %>% 
-#     html_node("h1") %>%
-#     html_text()
-#   
-#   all <- urls[[j]] %>% 
-#     read_html() %>% 
-#     html_node("#main_content_wrapper") %>%
-#     html_text()
-#   
-#   tbl_2[[j]] <- c(naam,all)
-#   
-#   j <- j+1                    # j <- j+1 iterates over each url in turn and assigns the table from the second url as an element of tbl list
-# }
-
-
+gemeentes$Website[16] <- "https://www.amsterdam.nl/" # was https://www.amsterdam.nl/contact
+gemeentes$Website[136] <- "https://www.h-i-ambacht.nl/" # was http://www.hendrik-ido-ambacht.nl
+gemeentes$Website[65] <- "http://www.dantumadiel.frl" # was http://www.dantumadiel.fr
 
 # CHECK FOR SITEMAP --------------------------------------------
 
@@ -222,7 +201,7 @@ for (i in seq_along(gemeentes$ibabs)) {
 # CHECK FOR EXTERNAL WEBSITE "notubiz" ------------------------------
 
 gemeentes$notubiz <- str_replace(str_replace(gemeentes$Website, "www.", ""), ".nl", ".notubiz.nl/leden")
-
+i <- 1
 for (i in seq_along(gemeentes$notubiz)) {
   
   # check if websites exist
@@ -279,54 +258,9 @@ for (i in seq_along(gemeentes$notubiz)) {
   i <- i + 1
 }
 
-# example
-# gemeentes$notubiz[[18]] <- ifelse((tryCatch({
-#   gemeentes$notubiz[[18]] %>%
-#     read_html()
-#   TRUE
-# }, error=function(e) FALSE)),
-# gemeentes$notubiz[[18]], NA)
-# 
-# if (!is.na(gemeentes$notubiz[18])) {
-#   gemeentes$notubiz[[18]] <- ifelse(length(gemeentes$notubiz[[18]] %>%
-#                                              read_html() %>%
-#                                              html_nodes("a") %>%
-#                                              html_text()) < 20,
-#                                     NA,
-#                                     gemeentes$notubiz[[18]])
-#   if (!is.na(gemeentes$notubiz[18])) {
-#     urls <- (gemeentes$notubiz[[18]] %>%
-#                read_html() %>%
-#                html_nodes("a") %>%
-#                html_attr("href"))[which(grepl("lid", (gemeentes$notubiz[[18]] %>%
-#                                                         read_html() %>%
-#                                                         html_nodes("a") %>%
-#                                                         html_attr("href"))))]
-#     if (length(urls) > 1) {
-#       dates <- NA
-#       # read in to dates of last acitivity of all members
-#       for (j in seq_along(urls)) {
-#         dates[[j]] <- urls[[j]] %>%
-#           read_html() %>%
-#           html_node("time") %>%
-#           html_attr("datetime")
-#         
-#         # compare those dates to the current yeaar to make sure to only get websites that are up to date
-#         if (grepl(substr(dates[[j]], 1, 4), substr(Sys.Date(), 1, 4)) & !is.na(dates[[j]])) {
-#           gemeentes$notubiz[[18]] <- gemeentes$notubiz[[18]]
-#         } else {
-#           gemeentes$notubiz[[18]] <- NA
-#         }
-#       }
-#     } else {
-#       gemeentes$notubiz[[18]] <- NA
-#     }
-#   }
-# }
-
 # CHECK FOR EXTERNAL WEBSITE "gementeraad." --------------------------------------
 
-gemeentes$Gemeenteraad. <- stringr::str_replace(gemeentes$Website, "www.", "gemeenteraad.")
+gemeentes$Gemeenteraad. <- str_replace(gemeentes$Website, "www.", "gemeenteraad.")
 
 for (i in seq_along(gemeentes$Gemeenteraad.)) {
   
@@ -342,7 +276,7 @@ for (i in seq_along(gemeentes$Gemeenteraad.)) {
 
 # CHECK FOR EXTERNAL WEBSITE "gemeenteraad" -------------------------
 
-gemeentes$Gemeenteraad <- stringr::str_replace(gemeentes$Website, "www.", "gemeenteraad")
+gemeentes$Gemeenteraad <- str_replace(gemeentes$Website, "www.", "gemeenteraad")
 
 for (i in seq_along(gemeentes$Gemeenteraad)) {
   
@@ -394,12 +328,8 @@ for (i in seq_along(gemeentes$ris)) {
                                NA)
   
 }
-# length(which(grepl("raad", (gemeentes$ris[[178]] %>%
-#   read_html() %>%
-#   html_nodes("a") %>%
-#   html_attr("href"))))) > 0
-# ding <- as.data.frame(LinkExtractor("http://ris.olst-wijhe.nl/besturen")$InternalLinks)
-# ding2 <- as.data.frame(LinkExtractor(gemeentes$Website[[222]])$InternalLinks)
+
+
 # CHECK FOR EXTERNAL WEBSITE "bestuur.gemeente.nl" ------------------
 gemeentes$Bestuur <- str_replace(gemeentes$Website, "www.", "bestuur.")
 for (i in seq_along(gemeentes$Bestuur)) {
@@ -446,115 +376,86 @@ ifelse((tryCatch({
 }, error=function(e) FALSE)),
 gemeentes$Raadsinformatie[[i]], NA)
 
-# https://lochem.raadsinformatie.nl/leden
+
 # CHECK IF WEBSITE IS PART OF "GO" --------------------------------------
-gemeentes$Website[136] <- "https://www.h-i-ambacht.nl/"
-gemeentes$Website[65] <- "http://www.dantumadiel.frl"
 
-gemeentes$go <- NA
-# for raads websites
-for (i in seq_along(gemeentes$Raad)){
-  if (!is.na(gemeentes$Raad[[i]])) {
-    gemeentes$go[[i]] <- ifelse(length(gemeentes$Raad[[i]] %>%
-                                         read_html() %>%
-                                         html_nodes("a.go") %>%
-                                         html_text()) != 0 |
-                                  length(gemeentes$Raad[[i]] %>%
-                                           read_html() %>%
-                                           html_nodes("span.go") %>%
-                                           html_text()) != 0 |
-                                  length(grepl("GemeenteOplossingen", (gemeentes$Raad[[i]] %>%
-                                                                         read_html() %>%
-                                                                         html_nodes("a.right") %>%
-                                                                         html_text()))) > 0,
-                                gemeentes$Raad[[i]], NA)
-  }
-}
-length(which(!is.na(gemeentes$go)))
-
-# for gemeenteraad websites
-for (i in seq_along(gemeentes$Gemeenteraad)){
-  if (is.na(gemeentes$go[[i]]) & !is.na(gemeentes$Gemeenteraad[[i]])) {
-    gemeentes$go[[i]] <- ifelse(length(gemeentes$Gemeenteraad[[i]] %>%
-                                         read_html() %>%
-                                         html_nodes("a.go") %>%
-                                         html_text()) != 0 |
-                                  length(gemeentes$Gemeenteraad[[i]] %>%
-                                           read_html() %>%
-                                           html_nodes("span.go") %>%
-                                           html_text()) != 0 |
-                                  length(grepl("GemeenteOplossingen", (gemeentes$Gemeenteraad[[i]] %>%
-                                                                         read_html() %>%
-                                                                         html_nodes("a.right") %>%
-                                                                         html_text()))) > 0,
-                                gemeentes$Gemeenteraad[[i]], NA)
-  }
-}
-
-# for bestuur websites
-for (i in seq_along(gemeentes$Bestuur)){
-  if (is.na(gemeentes$go[[i]]) & !is.na(gemeentes$Bestuur[[i]])) {
-    gemeentes$go[[i]] <- ifelse(length(gemeentes$Bestuur[[i]] %>%
-                                         read_html() %>%
-                                         html_nodes("a.go") %>%
-                                         html_text()) != 0 |
-                                  length(gemeentes$Bestuur[[i]] %>%
-                                           read_html() %>%
-                                           html_nodes("span.go") %>%
-                                           html_text()) != 0 |
-                                  length(grepl("GemeenteOplossingen", (gemeentes$Bestuur[[i]] %>%
-                                                                         read_html() %>%
-                                                                         html_nodes("a.right") %>%
-                                                                         html_text()))) > 0,
-                                gemeentes$Bestuur[[i]], NA)
-  }
-}
-
-# for regular gemeente websites
-for (i in seq_along(gemeentes$Website)) {
-  if (is.na(gemeentes$go[[i]])) {
-    gemeentes$go[[i]] <- ifelse(length(gemeentes$Website[[i]] %>%
-                                         read_html() %>%
-                                         html_nodes("a.go") %>%
-                                         html_text()) != 0 |
-                                  length(gemeentes$Website[[i]] %>%
-                                           read_html() %>%
-                                           html_nodes("span.go") %>%
-                                           html_text()) != 0 |
-                                  length(grepl("GemeenteOplossingen", (gemeentes$Website[[i]] %>%
-                                                                         read_html() %>%
-                                                                         html_nodes("a.right") %>%
-                                                                         html_text()))) > 0,
-                                gemeentes$Website[[i]], NA)
-  }
-}
-
-# example
-# gemeentes$go[[1]] <- ifelse(length(gemeentes$Website[[1]] %>%
-#                                      read_html() %>%
-#                                      html_nodes("a.go") %>%
-#                                      html_text()) != 0 |
-#                               length(grepl("GemeenteOplossingen", (gemeentes$Website[[1]] %>%
-#                                                               read_html() %>%
-#                                                               html_nodes("a.right") %>%
-#                                                               html_text()))) > 0,
-#                             gemeentes$Website[[1]], NA)
+# gemeentes$go <- NA
+# # for raads websites
+# for (i in seq_along(gemeentes$Raad)){
+#   if (!is.na(gemeentes$Raad[[i]])) {
+#     gemeentes$go[[i]] <- ifelse(length(gemeentes$Raad[[i]] %>%
+#                                          read_html() %>%
+#                                          html_nodes("a.go") %>%
+#                                          html_text()) != 0 |
+#                                   length(gemeentes$Raad[[i]] %>%
+#                                            read_html() %>%
+#                                            html_nodes("span.go") %>%
+#                                            html_text()) != 0 |
+#                                   length(grepl("GemeenteOplossingen", (gemeentes$Raad[[i]] %>%
+#                                                                          read_html() %>%
+#                                                                          html_nodes("a.right") %>%
+#                                                                          html_text()))) > 0,
+#                                 gemeentes$Raad[[i]], NA)
+#   }
+# }
+# length(which(!is.na(gemeentes$go)))
 # 
-# ifelse(length(gemeentes$Raad[[275]] %>%
-#                 read_html() %>%
-#                 html_nodes("a.go") %>%
-#                 html_text()) != 0 |
-#          length(gemeentes$Raad[[275]] %>%
-#                   read_html() %>%
-#                   html_nodes("span.go") %>%
-#                   html_text()) != 0 |
-#          length(grepl("GemeenteOplossingen", (gemeentes$Raad[[275]] %>%
-#                                                 read_html() %>%
-#                                                 html_nodes("a.right") %>%
-#                                                 html_text()))) > 0,
-#        gemeentes$Raad[[275]], NA)
-
-
+# # for gemeenteraad websites
+# for (i in seq_along(gemeentes$Gemeenteraad)){
+#   if (is.na(gemeentes$go[[i]]) & !is.na(gemeentes$Gemeenteraad[[i]])) {
+#     gemeentes$go[[i]] <- ifelse(length(gemeentes$Gemeenteraad[[i]] %>%
+#                                          read_html() %>%
+#                                          html_nodes("a.go") %>%
+#                                          html_text()) != 0 |
+#                                   length(gemeentes$Gemeenteraad[[i]] %>%
+#                                            read_html() %>%
+#                                            html_nodes("span.go") %>%
+#                                            html_text()) != 0 |
+#                                   length(grepl("GemeenteOplossingen", (gemeentes$Gemeenteraad[[i]] %>%
+#                                                                          read_html() %>%
+#                                                                          html_nodes("a.right") %>%
+#                                                                          html_text()))) > 0,
+#                                 gemeentes$Gemeenteraad[[i]], NA)
+#   }
+# }
+# 
+# # for bestuur websites
+# for (i in seq_along(gemeentes$Bestuur)){
+#   if (is.na(gemeentes$go[[i]]) & !is.na(gemeentes$Bestuur[[i]])) {
+#     gemeentes$go[[i]] <- ifelse(length(gemeentes$Bestuur[[i]] %>%
+#                                          read_html() %>%
+#                                          html_nodes("a.go") %>%
+#                                          html_text()) != 0 |
+#                                   length(gemeentes$Bestuur[[i]] %>%
+#                                            read_html() %>%
+#                                            html_nodes("span.go") %>%
+#                                            html_text()) != 0 |
+#                                   length(grepl("GemeenteOplossingen", (gemeentes$Bestuur[[i]] %>%
+#                                                                          read_html() %>%
+#                                                                          html_nodes("a.right") %>%
+#                                                                          html_text()))) > 0,
+#                                 gemeentes$Bestuur[[i]], NA)
+#   }
+# }
+# 
+# # for regular gemeente websites
+# for (i in seq_along(gemeentes$Website)) {
+#   if (is.na(gemeentes$go[[i]])) {
+#     gemeentes$go[[i]] <- ifelse(length(gemeentes$Website[[i]] %>%
+#                                          read_html() %>%
+#                                          html_nodes("a.go") %>%
+#                                          html_text()) != 0 |
+#                                   length(gemeentes$Website[[i]] %>%
+#                                            read_html() %>%
+#                                            html_nodes("span.go") %>%
+#                                            html_text()) != 0 |
+#                                   length(grepl("GemeenteOplossingen", (gemeentes$Website[[i]] %>%
+#                                                                          read_html() %>%
+#                                                                          html_nodes("a.right") %>%
+#                                                                          html_text()))) > 0,
+#                                 gemeentes$Website[[i]], NA)
+#   }
+# }
 
 
 
@@ -589,6 +490,9 @@ for (j in seq_along(gemeentes$ibabs)) {
   
 }
 
+#length(which(gemeentes$ibabs_url == "https://ris2.ibabs.eu"))
+gemeentes$ibabs_url[which(gemeentes$ibabs_url == "https://ris2.ibabs.eu")] <- NA
+
 list <- list()
 labels <- list()
 text <- list()
@@ -601,7 +505,6 @@ telefoonnummer <- numeric(0)
 hoofdfunctie <- numeric(0)
 nevenfunctie <- numeric(0)
 for (i in seq_along(gemeentes$ibabs_url)) {
-  #gemeentes$ibabs_info[i] <- list(0)
   if (!is.na(gemeentes$ibabs_url[i])) {
     for (j in seq_along(gemeentes$ibabs_url[[i]])) {
       naam[j] <- gemeentes$ibabs_url[[i]][j] %>%
@@ -644,48 +547,6 @@ for (i in seq_along(gemeentes$ibabs_url)) {
 }
 
 
-gemeentes$ibabs_url[which(gemeentes$ibabs_url == "https://ris2.ibabs.eu")] <- NA
-length(which(gemeentes$ibabs_url == "https://ris2.ibabs.eu"))
-
-
-naam[23] <- ifelse(length(gemeentes$ibabs_url[[34]][1] %>%
-                            read_html() %>%
-                            html_nodes("h2.profile-name") %>%
-                            html_text()) != 0,
-                   gemeentes$ibabs_url[[34]][1] %>%
-                     read_html() %>%
-                     html_nodes("h2.profile-name") %>%
-                     html_text(),
-                   NA)
-labels[[23]] <- gemeentes$ibabs_url[[34]][23] %>%
-  read_html() %>%
-  html_nodes("div.col-sm-5.detail-row-label") %>%
-  html_text()
-text[[23]] <- gemeentes$ibabs_url[[34]][23] %>%
-  read_html() %>%
-  html_nodes("div.col-sm-7.detail-row-text") %>%
-  html_text()
-politieke_partij[[23]] <- ifelse(grepl("Politieke partij", labels[23]),
-                                 text[[23]][which(grepl("Politieke partij", labels[[23]]))],
-                                 NA)
-adres[[23]] <- ifelse(grepl("Adres", labels[23]),
-                      text[[23]][which(grepl("Adres", labels[[23]]))],
-                      NA)
-emailadres[[23]] <- ifelse(grepl("Emailadres", labels[23]),
-                           text[[23]][which(grepl("Emailadres", labels[[23]]))],
-                           NA)
-telefoonnummer[[23]] <- ifelse(grepl("Telefoonnummer", labels[23]),
-                               text[[23]][which(grepl("Telefoonnummer", labels[[23]]))],
-                               NA)
-hoofdfunctie[[23]] <- ifelse(grepl("Hoofdfunctie", labels[23]),
-                             text[[23]][which(grepl("Hoofdfunctie", labels[[23]]))],
-                             NA)
-nevenfunctie[[23]] <- ifelse(grepl("Nevenfunctie", labels[23]),
-                             text[[23]][which(grepl("Nevenfunctie", labels[[23]]))],
-                             NA)
-gemeentes$ibabs_info[[34]] <- list()
-gemeentes$ibabs_info[[34]] <- list(naam = naam, politieke_partij = politieke_partij, adres = adres, emailadres= emailadres,
-                                   telefoonnummer = telefoonnummer, hoofdfunctie = hoofdfunctie, nevenfunctie = nevenfunctie)
 
 # SCRAPE WEBSITES USING NOTUBIZ -------------------------------------------
 
@@ -717,92 +578,75 @@ for (j in seq_along(gemeentes$notubiz)) {
 
 # use those urls to finally scrape information of members
 
-list <- list()
+gemeentes$notubiz_info <- NA
 for (i in seq_along(gemeentes$notubiz_url)) {
-  naam <- character(0)
-  telefoonnummer <- character(0)
-  functie <- character(0)
-  email <- character(0)
-  nevenactiviteiten <- character(0)
-  for (j in seq_along(gemeentes$notubiz_url[[i]])) {
-    naam[[j]] <- ifelse(is.na(gemeentes$notubiz_url[i]),
-                        NA,
-                        (unique(gemeentes$notubiz_url[[i]][j] %>%
-                                  read_html() %>%
-                                  html_nodes("dd.volledige_naam") %>%
-                                  html_text())))
-    
-    telefoonnummer[[j]] <- ifelse(is.na(gemeentes$notubiz_url[i]),
-                                  NA,
-                                  (unique(gemeentes$notubiz_url[[i]][j] %>%
-                                            read_html() %>%
-                                            html_nodes("dd.telefoonnummer") %>%
-                                            html_text())))
-    
-    functie[[j]] <- ifelse(is.na(gemeentes$notubiz_url[i]),
+  if (!is.na(gemeentes$notubiz_url[i])) {
+    naam <- character(0)
+    telefoonnummer <- character(0)
+    functie <- character(0)
+    email <- character(0)
+    nevenactiviteiten <- character(0)
+    for (j in seq_along(gemeentes$notubiz_url[[i]])) {
+      naam[[j]] <- (unique(gemeentes$notubiz_url[[i]][j] %>%
+                                    read_html() %>%
+                                    html_nodes("dd.volledige_naam") %>%
+                                    html_text()))
+      
+      telefoonnummer[[j]] <- ifelse(length((unique(gemeentes$notubiz_url[[i]][j] %>%
+                                              read_html() %>%
+                                              html_nodes("dd.telefoonnummer") %>%
+                                              html_text()))) == 0,
+                                    NA,
+                                    (unique(gemeentes$notubiz_url[[i]][j] %>%
+                                              read_html() %>%
+                                              html_nodes("dd.telefoonnummer") %>%
+                                              html_text())))
+
+      functie[[j]] <- ifelse(is.na(gemeentes$notubiz_url[i]),
+                             NA,
+                             (unique(gemeentes$notubiz_url[[i]][j] %>%
+                                       read_html() %>%
+                                       html_nodes("dd.functie") %>%
+                                       html_text())))
+
+      email[[j]] <- ifelse(is.na(gemeentes$notubiz_url[i]),
                            NA,
                            (unique(gemeentes$notubiz_url[[i]][j] %>%
                                      read_html() %>%
-                                     html_nodes("dd.functie") %>%
+                                     html_nodes("dd.email") %>%
                                      html_text())))
-    
-    email[[j]] <- ifelse(is.na(gemeentes$notubiz_url[i]),
-                         NA,
-                         (unique(gemeentes$notubiz_url[[i]][j] %>%
-                                   read_html() %>%
-                                   html_nodes("dd.email") %>%
-                                   html_text())))
-    
-    nevenactiviteiten[[j]] <- ifelse(is.na(gemeentes$notubiz_url[i]),
-                                     NA,
-                                     (unique(gemeentes$notubiz_url[[i]][j] %>%
-                                               read_html() %>%
-                                               html_nodes("div#nevenactiviteiten") %>%
-                                               html_text())))
-    
-    j <- j+1
+
+      nevenactiviteiten[[j]] <- ifelse(is.na(gemeentes$notubiz_url[i]),
+                                       NA,
+                                       (unique(gemeentes$notubiz_url[[i]][j] %>%
+                                                 read_html() %>%
+                                                 html_nodes("div#nevenactiviteiten") %>%
+                                                 html_text())))
+        
+      j <- j+1
+    }
+    gemeentes$notubiz_info[[i]] <- list(0)
+    gemeentes$notubiz_info[[i]] <- list(naam = naam, telefoonnummer = telefoonnummer, functie = functie, email = email, nevenactiviteiten = nevenactiviteiten)
+    i <- i+1
+  } else {
+    gemeentes$ibabs_info[[i]] <- NA
   }
-  list[[i]] <- list(naam = naam, telefoonnummer = telefoonnummer, functie = functie, email = email, nevenactiviteiten = nevenactiviteiten)
-  i <- i+1
 }
 
+gemeentes$notubiz_url[7][32]
+textclean(gemeentes$notubiz_info[7])
+
+gemeentes$notubiz_url[22]
+str_replace(gemeentes$notubiz_info[[22]]$nevenactiviteiten[2], "[\t]", "")
+cat(gemeentes$notubiz_info[[22]]$nevenactiviteiten)
+
+try <- gsub("[\t]", "", gemeentes$notubiz_info[[22]]$nevenactiviteiten[2])
+try <- str_split(try, "[\n]")
+try[[1]][which(try[[1]] != "")]
+
+# bekostigd onbekostigd
 
 
-# example
-# gemeentes$notubiz_url[[72]][2] %>%
-#   read_html() %>%
-#   html_nodes("dd.volledige_naam") %>%
-#   html_text()
-# 
-# gemeentes$notubiz_url[[72]][2] %>%
-#   read_html() %>%
-#   html_nodes("dd.telefoonnummer") %>%
-#   html_text()
-# 
-# gemeentes$notubiz_url[[72]][2] %>%
-#   read_html() %>%
-#   html_nodes("dd.functie") %>%
-#   html_text()
-# 
-# gemeentes$notubiz_url[[72]][2] %>%
-#   read_html() %>%
-#   html_nodes("dd.email") %>%
-#   html_text()
-# 
-# gemeentes$notubiz_url[[72]][2] %>%
-#   read_html() %>%
-#   html_nodes("dd.email") %>%
-#   html_text()
-# 
-# gemeentes$notubiz_url[[30]][1] %>%
-#   read_html() %>%
-#   html_nodes("dd.url") %>%
-#   html_text()
-# 
-# gemeentes$notubiz_url[[30]][1] %>%
-#   read_html() %>%
-#   html_nodes("div#nevenactiviteiten") %>%
-#   html_text()
 # SCRAPE WEBSITES USING AN EXTERNAL WEBSITE OR REGULAR WEBSITE ------------
 # gather urls of websites that use an external website
 gemeentes$extern <- NA
@@ -884,61 +728,7 @@ for (i in seq_along(gemeentes$extern)) {
 # breda 50, beverwijk 39,
 # gemeentes$Website[16] <- "http://www.amsterdam.nl/"
 # gemeentes$extern[16] <- "https://www.amsterdam.nl/"
-# tryCatch({
-#   LinkExtractor(gemeentes$extern[44])
-#   TRUE
-# }, error=function(e) FALSE)
-# links <- LinkExtractor(gemeentes$extern[44])$InternalLinks
-# links_sub <- sub(".*nl", "", links)
-# links_grepl <- links[which(grepl("gemeenteraad|Gemeenteraad|samenstelling|Samenstelling|wie-is-wie|raad|Raad|organisatie|Organisatie|
-#                                  raadsleden|Raadsleden", 
-#                                  links_sub) & !grepl("Vergaderingen|vergaderingen", links_sub))]
-# for (i in seq_along(links_grepl)) {
-#   links2 <- LinkExtractor(links_grepl[i])$InternalLinks
-#   links_sub2 <- sub(".*nl", "", links2)
-#   links_grepl2 <- links2[which(grepl("gemeenteraad|Gemeenteraad|samenstelling|Samenstelling|wie-is-wie|raad|Raad|organisatie|Organisatie|
-#                                  raadsleden|Raadsleden", 
-#                                    links_sub2) & !grepl("Vergaderingen|vergaderingen", links_sub2))]
-# }
-# 
-# links_merge <- unique(c(links_grepl, links_grepl2))
-# 
-# # 53 is FALSE (kann nicht gelesen werden), 45 is TRUE (kann gelesen werden)
-# tryCatch({
-#   for (i in seq_along(links_grepl))
-#     links_grepl[i] %>%
-#     read_html()
-#   TRUE
-# }, error=function(e) FALSE)
-# 
-# lengths <- NA
-# for (i in seq_along(links_grepl)) {
-#   lengths[i] <- length(links_grepl[i] %>%
-#            read_html() %>%
-#            html_nodes("a") %>%
-#            html_attr("href"))
-# }
-# links_grepl[which.max(lengths)]
-# 
-# length(gemeentes$extern[16] %>%
-#   read_html() %>%
-#   html_nodes("a") %>%
-#   html_attr("href"))
-# 
-# length(links_grepl[2] %>%
-#   read_html() %>%
-#   html_nodes("a") %>%
-#   html_attr("href"))
-# 
-# length(links_grepl[3] %>%
-#   read_html() %>%
-#   html_nodes("a") %>%
-#   html_attr("href"))
-# 
-# length(links_grepl[4] %>%
-#   read_html() %>%
-#   html_nodes("a") %>%
-#   html_attr("href"))
+
 
 
 
@@ -963,7 +753,7 @@ ifelse(is.na(wbsite),
 LinkExtractor("https://www.arnhem.nl/Bestuur/gemeenteraad/over_de_gemeenteraad", ExternalLInks = T)
 
 
-# EXTRACT RAADSLEDEN SITE FROM BERGEN (XML SITEMAP) ---------------------------
+# EXTRACT RAADSLEDEN SITE FROM BERGEN (XML SITEMAP)
 links <- gemeentes$Sitemaps[33] %>%
   read_html() %>%
   html_nodes("loc") %>%
@@ -971,7 +761,7 @@ links <- gemeentes$Sitemaps[33] %>%
 
 links <- unique(links[which(grepl("gemeenteraad", links))]); links
 
-# EXTRACT RAADSLEDEN SITE FROM ALBRANDSWAARD (XML SITEMAP) --------------------------- wie-is-wie
+# EXTRACT RAADSLEDEN SITE FROM ALBRANDSWAARD (XML SITEMAP)
 
 links <- gemeentes$Sitemaps[6] %>%
   read_html() %>%
@@ -981,7 +771,7 @@ links <- gemeentes$Sitemaps[6] %>%
 links <- unique(links[which(grepl("gemeenteraad|samenstelling|wie-is-wie", links))]); links
 gemeenteraad <- links[which.min(nchar(links))] ;gemeenteraad
 
-# EXTRACT RAADSLEDEN SITE FROM ALMELO (XML SITEMAP) --------------------------- SAMENSTELLING
+# EXTRACT RAADSLEDEN SITE FROM ALMELO (XML SITEMAP)
 
 links <- gemeentes$Sitemaps[8] %>%
   read_html() %>%
@@ -991,7 +781,7 @@ links <- gemeentes$Sitemaps[8] %>%
 links <- unique(links[which(grepl("gemeenteraad|samenstelling", links))]); links
 gemeenteraad <- links[which.min(nchar(links))] ;gemeenteraad
 
-# EXTRACT RAADSLEDEN SITE FROM ZWOLLE (NO SITEMAP & IBABS) ------------------------------------------------------------------
+# EXTRACT RAADSLEDEN SITE FROM ZWOLLE (NO SITEMAP & IBABS)
 # algemeen > "gemeenteraad" > "ibabs"
 links <- unlist(purrr::flatten(LinkExtractor(gemeentes$Website[355], ExternalLInks = TRUE)[c(2,3)])) ;links
 links <- unique(links[which(grepl("gemeenteraad", links))]) ;links
@@ -1021,7 +811,7 @@ for (i in seq_along(links_ibabs)) {
 link_gemeenteraad <- storage[storage != "no"]
 gemeentes <- gemeentes %>% select(-c(use, use_external))
 
-# USE GEMEENTERAAD IF RAAD EN GEMEENTERAAD ARE BOTH AVAILABLE ------------------
+# USE GEMEENTERAAD IF RAAD EN GEMEENTERAAD ARE BOTH AVAILABLE
 
 gemeentes$use <- ifelse(is.na(gemeentes$Gemeenteraad), gemeentes$Raad, gemeentes$Gemeenteraad)
 gemeentes$use <- ifelse(is.na(gemeentes$Gemeenteraad), gemeentes$Raad, gemeentes$Gemeenteraad) # als gemeenteraad en raad en sitemap niet aanwezig, gebruik website
@@ -1091,91 +881,7 @@ for (i in seq_along(gemeentes$ibabs_url)) {
 tbl_bind <- do.call(rbind, tbl)
 ding <- as.data.frame(tbl_bind); View(ding)
 
-## voorbeeld
-# gemeentes$ibabs_info <- NA
-# i <- 1
-# j <- 1
-# for (i in seq_along(gemeentes$ibabs_url[1:5])) {
-#   tbl <- list()
-#   naam <- character()
-#   all <- character()
-#   if (!is.na(gemeentes$ibabs_url[[i]])) {
-#     for (j in seq_along(gemeentes$ibabs_url[[i]])) {
-#       
-#       gemeente <- as.character(gemeentes$Gemeente[i])
-#       
-#       naam <- unique(gemeentes$ibabs_url[[i]][j] %>%
-#                        read_html() %>%
-#                        html_nodes("h2.profile-name") %>%
-#                        html_text())
-#       
-#       all <- gemeentes$ibabs_url[[i]][j] %>%
-#         read_html() %>%
-#         html_nodes("div.profile-details.col-sm-9") %>%
-#         html_text()
-#       
-#       tbl[[j]] <- c(gemeente, naam, all)
-#       
-#       j <- j+1
-#     }
-#   }
-#   
-#   else {
-#     gemeente[i] <- as.character(gemeentes$Gemeente[i])
-#     naam[i] <- NA
-#     all[i] <- NA
-#     
-#     tbl[[j]] <- c(gemeente, naam, all)
-#     
-#   }
-#   gemeentes$ibabs_info[i] <- tbl
-#   i <- i+1
-#   
-# }
-# tbl_bind <- do.call(rbind, tbl)
-# ding <- as.data.frame(tbl_bind); View(ding)
-# 
-# 
-# if (!is.na(gemeentes$ibabs_url[[4]])) {
-#   tbl <- list()
-#   naam <- character()
-#   all <- character()
-#   for (j in seq_along(gemeentes$ibabs_url[[4]])) {
-#     
-#     gemeente <- as.character(gemeentes$Gemeente[4])
-#     
-#     naam <- unique(gemeentes$ibabs_url[[4]][j] %>%
-#                      read_html() %>%
-#                      html_nodes("h2.profile-name") %>%
-#                      html_text())
-#     
-#     all <- gemeentes$ibabs_url[[4]][j] %>%
-#       read_html() %>%
-#       html_nodes("div.profile-details.col-sm-9") %>%
-#       html_text()
-#     
-#     tbl[4][[j]] <- c(gemeente, naam, all)
-#     
-#     j <- j+1
-#   }
-#   
-#   else {
-#     naam <- NA
-#     all <- NA
-#     
-#     tbl[[j]] <- c(naam, all)
-#     
-#   }
-# }
-# tbl_bind <- do.call(rbind, tbl)
-# ding <- as.data.frame(tbl_bind); View(ding)
 
-
-
-
-# JSON --------------------------------------------------------------------
-library(rjson)
-json <- toJSON(gemeentes)
 
 # TO DO -------------------------------------------------------------------
 
@@ -1195,19 +901,16 @@ json <- toJSON(gemeentes)
 # notubiz scrape schreiben, was kopieren von ibabs?
 
 
+# ibabs DONE
+# notubiz
+# general
+
 length(which(!is.na(gemeentes$extern)))/355*100
 length(which(!is.na(gemeentes$ibabs)))/355*100
 length(which(!is.na(gemeentes$notubiz)))/355*100
 
-gemeentes_ibabs <- gemeentes %>%
-  select(Gemeente, ibabs_info)
-save(gemeentes,file="gemeentes")
-
 json <- toJSON(gemeentes_ibabs)
 write.csv2(json, "gemeentes_ibabs")
 
-gemeentes$ibabs_url[355][[1]][1] %>%
-  read_html() %>%
-  html_nodes(xpath = "//div[contains(@class,'detail-row row')] and //") %>%
-  html_text()
-
+# save data
+save(gemeentes,file="gemeentes")
