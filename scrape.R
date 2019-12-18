@@ -874,299 +874,767 @@ gemeentes$extern[45] <- gemeentes$Website[45]
 gemeentes$url <- NA
 links_merge <- numeric()
 
-# regular gemeente
-if (is.na(gemeentes$ibabs[9]) & is.na(gemeentes$notubiz[9])) {
-  if (!is.na(gemeentes$Website[9])) {
-    if (tryCatch({
-      LinkExtractor(gemeentes$Website[9])
-      TRUE
-    }, error=function(e) FALSE)) {
-      
-      links_internal <- LinkExtractor(gemeentes$Website[9])$InternalLinks
-      links_external <- LinkExtractor(gemeentes$Website[9])$ExternalLinks
-      links <- c(links_internal, links_external)
-      links_sub <- sub(".*nl", "", links)
-      links_grepl <- links[which(grepl("gemeenteraad|Gemeenteraad|samenstelling|Samenstelling|wie-is-wie|raad|Raad|organisatie|Organisatie|
-                                       raadsleden|Raadsleden|Bestuur|bestuur|inwoners", 
-                                       links_sub) & !grepl("Vergaderingen|vergaderingen|verordeningen|whatsapp|RSS|rss|Nieuws|nieuws", links_sub))]
-      links2 <- list()
-      links_sub2 <- list()
-      links_grepl2 <- list()
-      for (t in seq_along(links_grepl)) {
-        if (length(LinkExtractor(links_grepl[t])$InternalLinks) != 0) {
-          links2[[t]] <- LinkExtractor(links_grepl[t])$InternalLinks
-          links_sub2[[t]] <- gsub(".*nl", "", links2[[t]])
-        } else {
-          links_grepl2[[t]] <- NA
+
+## LOOP TROUGH ALL POSSIBLE SITES
+
+# REGULAR GEMEENTE
+for (i in seq_along(gemeentes$Website)) {
+  if (is.na(gemeentes$ibabs[i]) & is.na(gemeentes$notubiz[i])) {
+    if (!is.na(gemeentes$Website[i])) {
+      if (tryCatch({
+        LinkExtractor(gemeentes$Website[i])
+        TRUE
+      }, error=function(e) FALSE)) {
+        
+        links_internal <- LinkExtractor(gemeentes$Website[i])$InternalLinks
+        links_external <- LinkExtractor(gemeentes$Website[i])$ExternalLinks
+        links <- c(links_internal, links_external)
+        links_sub <- sub(".*nl", "", links)
+        links_grepl <- links[which(grepl("gemeenteraad|Gemeenteraad|samenstelling|Samenstelling|wie-is-wie|raad|Raad|organisatie|Organisatie|
+                                         raadsleden|Raadsleden|Bestuur|bestuur|inwoners", 
+                                         links_sub) & !grepl("Vergaderingen|vergaderingen|verordeningen|whatsapp|RSS|rss|Nieuws|nieuws", links_sub))]
+        links2 <- list()
+        links_sub2 <- list()
+        links_grepl2 <- list()
+        for (t in seq_along(links_grepl)) {
+          if (length(LinkExtractor(links_grepl[t])$InternalLinks) != 0) {
+            links2[[t]] <- LinkExtractor(links_grepl[t])$InternalLinks
+            links_sub2[[t]] <- gsub(".*nl", "", links2[[t]])
+          } else {
+            links_grepl2[[t]] <- NA
+          }
         }
-      }
-      links2 <- unlist(links2)
-      links_sub2 <- unlist(links_sub2)
-      links_grepl2 <- links2[which(grepl("gemeenteraad|Gemeenteraad|samenstelling|Samenstelling|wie-is-wie|raad|Raad|organisatie|Organisatie|
-                                         raadsleden|Raadsleden|bestuur", 
-                                         links_sub2) & !grepl("Vergaderingen|vergaderingen|verordeningen|whatsapp|RSS|rss|Nieuws|nieuws", links_sub2))]
-      links_grepl2 <- unique(unlist(links_grepl2))
-      
-      links3 <- list()
-      links_sub3 <- list()
-      links_grepl3 <- list()
-      for (z in seq_along(links_grepl2)) {
-        if (tryCatch({
-          LinkExtractor(links_grepl2[z])$InternalLinks
+        links2 <- unlist(links2)
+        links_sub2 <- unlist(links_sub2)
+        links_grepl2 <- links2[which(grepl("gemeenteraad|Gemeenteraad|samenstelling|Samenstelling|wie-is-wie|raad|Raad|organisatie|Organisatie|
+                                           raadsleden|Raadsleden|bestuur", 
+                                           links_sub2) & !grepl("Vergaderingen|vergaderingen|verordeningen|whatsapp|RSS|rss|Nieuws|nieuws", links_sub2))]
+        links_grepl2 <- unique(unlist(links_grepl2))
+        
+        links3 <- list()
+        links_sub3 <- list()
+        links_grepl3 <- list()
+        for (z in seq_along(links_grepl2)) {
+          if (tryCatch({
+            LinkExtractor(links_grepl2[z])$InternalLinks
+            TRUE
+          }, error=function(e) FALSE)) {
+            if (length(LinkExtractor(links_grepl2[z])$InternalLinks) != 0) {
+              links3[[z]] <- LinkExtractor(links_grepl2[z])$InternalLinks
+              links_sub3[[z]] <- gsub(".*nl", "", links3[[z]])
+            }
+          } else {
+            links_sub3[[z]] <- NA
+          }
+        }
+        links3 <- unlist(links3)
+        links_sub3 <- unlist(links_sub3)
+        links_grepl3 <- links3[which(grepl("gemeenteraad|Gemeenteraad|samenstelling|Samenstelling|wie-is-wie|raad|Raad|organisatie|Organisatie|raadsleden|Raadsleden",
+                                           links_sub3) & !grepl("Vergaderingen|vergaderingen|verordeningen|whatsapp|RSS|rss|Nieuws|nieuws", links_sub3))]
+        links_grepl3 <- unique(unlist(links_grepl3))
+        
+        links_merge <- unique(c(links_grepl, links_grepl2, links_grepl3))
+        links_merge <- links_merge[which(!grepl("whatsapp|griffie|Griffie", links_merge))]
+        
+        samenstelling_gemeenteraad <- links_merge[which(grepl("samenstelling-gemeenteraad", links_merge))]
+        gemeenteraad_samenstelling <- links_merge[which(grepl("gemeenteraad-samenstelling", links_merge))]
+        samenstelling_raad <- links_merge[which(grepl("samenstelling-raad", links_merge))]
+        Samenstelling_gemeenteraad <- links_merge[which(grepl("Samenstelling_gemeenteraad|samenstelling_gemeenteraad", links_merge))]
+        wie <- links_merge[which(grepl("Wie_zitten_er_in_de_gemeenteraad|wie_zitten_er_in_de_gemeenteraad|wie-zitten-er-in-de-gemeenteraad|
+                                       Wie-zitten-er-in-de-gemeenteraad", links_merge))]
+        
+        gemeentes$url[i] <- ifelse(length(samenstelling_gemeenteraad) > 0, samenstelling_gemeenteraad,
+                                   ifelse(length(gemeenteraad_samenstelling) > 0, gemeenteraad_samenstelling, 
+                                          ifelse(length(samenstelling_raad) > 0, samenstelling_raad,
+                                                 ifelse(length(Samenstelling_gemeenteraad) > 0, Samenstelling_gemeenteraad, 
+                                                        ifelse(length(wie) > 0, wie, NA)))))
+        
+        if (length(links_merge) > 0 & is.na(gemeentes$url[i]) & tryCatch({
+          for (l in seq_along(links_merge)) {
+            links_merge[l] %>%
+              read_html()
+          }
           TRUE
         }, error=function(e) FALSE)) {
-          if (length(LinkExtractor(links_grepl2[z])$InternalLinks) != 0) {
-            links3[[z]] <- LinkExtractor(links_grepl2[z])$InternalLinks
-            links_sub3[[z]] <- gsub(".*nl", "", links3[[z]])
+          lengths <- NA
+          for (j in seq_along(links_merge)) {
+            lengths[j] <- length(links_merge[j] %>%
+                                   read_html() %>%
+                                   html_nodes("a") %>%
+                                   html_attr("href"))
           }
-        } else {
-          links_sub3[[z]] <- NA
+          gemeentes$url[i] <- links_merge[which.max(lengths)] 
         }
-      }
-      links3 <- unlist(links3)
-      links_sub3 <- unlist(links_sub3)
-      links_grepl3 <- links3[which(grepl("gemeenteraad|Gemeenteraad|samenstelling|Samenstelling|wie-is-wie|raad|Raad|organisatie|Organisatie|raadsleden|Raadsleden",
-                                         links_sub3) & !grepl("Vergaderingen|vergaderingen|verordeningen|whatsapp|RSS|rss|Nieuws|nieuws", links_sub3))]
-      links_grepl3 <- unique(unlist(links_grepl3))
-      
-      links_merge <- unique(c(links_grepl, links_grepl2, links_grepl3))
-      links_merge <- links_merge[which(!grepl("whatsapp|griffie|Griffie", links_merge))]
-      
-      samenstelling_gemeenteraad <- links_merge[which(grepl("samenstelling-gemeenteraad", links_merge))]
-      gemeenteraad_samenstelling <- links_merge[which(grepl("gemeenteraad-samenstelling", links_merge))]
-      samenstelling_raad <- links_merge[which(grepl("samenstelling-raad", links_merge))]
-      Samenstelling_gemeenteraad <- links_merge[which(grepl("Samenstelling_gemeenteraad|samenstelling_gemeenteraad", links_merge))]
-      wie <- links_merge[which(grepl("Wie_zitten_er_in_de_gemeenteraad|wie_zitten_er_in_de_gemeenteraad|wie-zitten-er-in-de-gemeenteraad|
-                                     Wie-zitten-er-in-de-gemeenteraad", links_merge))]
-      
-      gemeentes$url[9] <- ifelse(length(samenstelling_gemeenteraad) > 0, samenstelling_gemeenteraad,
-                                         ifelse(length(gemeenteraad_samenstelling) > 0, gemeenteraad_samenstelling, 
-                                                ifelse(length(samenstelling_raad) > 0, samenstelling_raad,
-                                                       ifelse(length(Samenstelling_gemeenteraad) > 0, Samenstelling_gemeenteraad, 
-                                                              ifelse(length(wie) > 0, wie, NA)))))
-      
-      if (length(links_merge) > 0 & is.na(gemeentes$url[9]) & tryCatch({
-        for (l in seq_along(links_merge)) {
-          links_merge[l] %>%
-            read_html()
-        }
-        TRUE
-      }, error=function(e) FALSE)) {
-        lengths <- NA
-        for (j in seq_along(links_merge)) {
-          lengths[j] <- length(links_merge[j] %>%
-                                 read_html() %>%
-                                 html_nodes("a") %>%
-                                 html_attr("href"))
-        }
-        gemeentes$url[9] <- links_merge[which.max(lengths)] 
       }
     }
   }
 }
 
-if (is.na(gemeentes$ibabs[9]) & is.na(gemeentes$notubiz[9]) & is.na(gemeentes$url[9])) {
-  if (!is.na(gemeentes$Gemeenteraad.[9])) {
-    if (tryCatch({
-      LinkExtractor(gemeentes$Gemeenteraad.[9])
-      TRUE
-    }, error=function(e) FALSE)) {
-      
-      links_internal <- LinkExtractor(gemeentes$Gemeenteraad.[9])$InternalLinks
-      links_external <- LinkExtractor(gemeentes$Gemeenteraad.[9])$ExternalLinks
-      links <- c(links_internal, links_external)
-      links_sub <- sub(".*nl", "", links)
-      links_grepl <- links[which(grepl("gemeenteraad|Gemeenteraad|samenstelling|Samenstelling|wie-is-wie|raad|Raad|organisatie|Organisatie|
-                                       raadsleden|Raadsleden|Bestuur|bestuur|inwoners", 
-                                       links_sub) & !grepl("Vergaderingen|vergaderingen|verordeningen|whatsapp|RSS|rss|Nieuws|nieuws", links_sub))]
-      links2 <- list()
-      links_sub2 <- list()
-      links_grepl2 <- list()
-      for (t in seq_along(links_grepl)) {
-        if (length(LinkExtractor(links_grepl[t])$InternalLinks) != 0) {
-          links2[[t]] <- LinkExtractor(links_grepl[t])$InternalLinks
-          links_sub2[[t]] <- gsub(".*nl", "", links2[[t]])
-        } else {
-          links_grepl2[[t]] <- NA
-        }
-      }
-      links2 <- unlist(links2)
-      links_sub2 <- unlist(links_sub2)
-      links_grepl2 <- links2[which(grepl("gemeenteraad|Gemeenteraad|samenstelling|Samenstelling|wie-is-wie|raad|Raad|organisatie|Organisatie|
-                                         raadsleden|Raadsleden|bestuur", 
-                                         links_sub2) & !grepl("Vergaderingen|vergaderingen|verordeningen|whatsapp|RSS|rss|Nieuws|nieuws", links_sub2))]
-      links_grepl2 <- unique(unlist(links_grepl2))
-      
-      # links3 <- list()
-      # links_sub3 <- list()
-      # links_grepl3 <- list()
-      # for (z in seq_along(links_grepl2)) {
-      #   if (tryCatch({
-      #     LinkExtractor(links_grepl2[z])$InternalLinks
-      #     TRUE
-      #   }, error=function(e) FALSE)) {
-      #     if (length(LinkExtractor(links_grepl2[z])$InternalLinks) != 0) {
-      #       links3[[z]] <- LinkExtractor(links_grepl2[z])$InternalLinks
-      #       links_sub3[[z]] <- gsub(".*nl", "", links3[[z]])
-      #     }
-      #   } else {
-      #     links_sub3[[z]] <- NA
-      #   }
-      # }
-      # links3 <- unlist(links3)
-      # links_sub3 <- unlist(links_sub3)
-      # links_grepl3 <- links3[which(grepl("gemeenteraad|Gemeenteraad|samenstelling|Samenstelling|wie-is-wie|raad|Raad|organisatie|Organisatie|raadsleden|Raadsleden",
-      #                                    links_sub3) & !grepl("Vergaderingen|vergaderingen|verordeningen|whatsapp|RSS|rss|Nieuws|nieuws", links_sub3))]
-      # links_grepl3 <- unique(unlist(links_grepl3))
-      
-      links_merge <- unique(c(links_grepl, links_grepl2))
-      links_merge <- links_merge[which(!grepl("whatsapp|griffie|Griffie", links_merge))]
-      
-      samenstelling_gemeenteraad <- links_merge[which(grepl("samenstelling-gemeenteraad", links_merge))]
-      gemeenteraad_samenstelling <- links_merge[which(grepl("gemeenteraad-samenstelling", links_merge))]
-      samenstelling_raad <- links_merge[which(grepl("samenstelling-raad", links_merge))]
-      Samenstelling_gemeenteraad <- links_merge[which(grepl("Samenstelling_gemeenteraad|samenstelling_gemeenteraad", links_merge))]
-      wie <- links_merge[which(grepl("Wie_zitten_er_in_de_gemeenteraad|wie_zitten_er_in_de_gemeenteraad|wie-zitten-er-in-de-gemeenteraad|
-                                     Wie-zitten-er-in-de-gemeenteraad", links_merge))]
-      
-      gemeentes$url[9] <- ifelse(length(samenstelling_gemeenteraad) > 0, samenstelling_gemeenteraad,
-                                 ifelse(length(gemeenteraad_samenstelling) > 0, gemeenteraad_samenstelling, 
-                                        ifelse(length(samenstelling_raad) > 0, samenstelling_raad,
-                                               ifelse(length(Samenstelling_gemeenteraad) > 0, Samenstelling_gemeenteraad, 
-                                                      ifelse(length(wie) > 0, wie, NA)))))
-      
-      if (length(links_merge) > 0 & is.na(gemeentes$url[9]) & tryCatch({
-        for (l in seq_along(links_merge)) {
-          links_merge[l] %>%
-            read_html()
-        }
-        TRUE
-      }, error=function(e) FALSE)) {
-        lengths <- NA
-        for (j in seq_along(links_merge)) {
-          lengths[j] <- length(links_merge[j] %>%
-                                 read_html() %>%
-                                 html_nodes("a") %>%
-                                 html_attr("href"))
-        }
-        gemeentes$url[9] <- links_merge[which.max(lengths)] 
-      }
-    }
-  }
-}
-
-
-if (!is.na(gemeentes$extern[41])) {
-  if (tryCatch({
-    LinkExtractor(gemeentes$extern[41])
-    TRUE
-  }, error=function(e) FALSE)) {
-    
-    links_internal <- LinkExtractor(gemeentes$extern[45])$InternalLinks
-    links_external <- LinkExtractor(gemeentes$extern[45])$ExternalLinks
-    links <- c(links_internal, links_external)
-    links_sub <- sub(".*nl", "", links)
-    links_grepl <- links[which(grepl("gemeenteraad|Gemeenteraad|samenstelling|Samenstelling|wie-is-wie|raad|Raad|organisatie|Organisatie|
-                                     raadsleden|Raadsleden|Bestuur|bestuur|inwoners", 
-                                     links_sub) & !grepl("Vergaderingen|vergaderingen|nieuws|verordeningen|Nieuws|nieuws", links_sub))]
-    links2 <- list()
-    links_sub2 <- list()
-    links_grepl2 <- list()
-    for (t in seq_along(links_grepl)) {
-      if (length(LinkExtractor(links_grepl[t])$InternalLinks) != 0) {
-        links2[[t]] <- LinkExtractor(links_grepl[t])$InternalLinks
-        links_sub2[[t]] <- gsub(".*nl", "", links2[[t]])
-      } else {
-        links_grepl2[[t]] <- NA
-      }
-    }
-    links2 <- unlist(links2)
-    links_sub2 <- unlist(links_sub2)
-    links_grepl2 <- links2[which(grepl("gemeenteraad|Gemeenteraad|samenstelling|Samenstelling|wie-is-wie|raad|Raad|organisatie|Organisatie|
-                                       raadsleden|Raadsleden|bestuur", 
-                                       links_sub2) & !grepl("Vergaderingen|vergaderingen", links_sub2))]
-    links_grepl2 <- unique(unlist(links_grepl2))
-    
-    links3 <- list()
-    links_sub3 <- list()
-    links_grepl3 <- list()
-    for (z in seq_along(links_grepl2)) {
+# GEMEENTERAAD.
+for (i in seq_along(gemeentes$`Gemeenteraad.`)) {
+  if (is.na(gemeentes$ibabs[i]) & is.na(gemeentes$notubiz[i]) & is.na(gemeentes$url[i])) {
+    if (!is.na(gemeentes$Gemeenteraad.[i])) {
       if (tryCatch({
-        LinkExtractor(links_grepl2[z])$InternalLinks
+        LinkExtractor(gemeentes$Gemeenteraad.[i])
         TRUE
       }, error=function(e) FALSE)) {
-        if (length(LinkExtractor(links_grepl2[z])$InternalLinks) != 0) {
-          links3[[z]] <- LinkExtractor(links_grepl2[z])$InternalLinks
-          links_sub3[[z]] <- gsub(".*nl", "", links3[[z]])
+        
+        links_internal <- LinkExtractor(gemeentes$Gemeenteraad.[i])$InternalLinks
+        links_external <- LinkExtractor(gemeentes$Gemeenteraad.[i])$ExternalLinks
+        links <- c(links_internal, links_external)
+        links_sub <- sub(".*nl", "", links)
+        links_grepl <- links[which(grepl("gemeenteraad|Gemeenteraad|samenstelling|Samenstelling|wie-is-wie|raad|Raad|organisatie|Organisatie|
+                                       raadsleden|Raadsleden|Bestuur|bestuur|inwoners", 
+                                         links_sub) & !grepl("Vergaderingen|vergaderingen|verordeningen|whatsapp|RSS|rss|Nieuws|nieuws", links_sub))]
+        links2 <- list()
+        links_sub2 <- list()
+        links_grepl2 <- list()
+        for (t in seq_along(links_grepl)) {
+          if (length(LinkExtractor(links_grepl[t])$InternalLinks) != 0) {
+            links2[[t]] <- LinkExtractor(links_grepl[t])$InternalLinks
+            links_sub2[[t]] <- gsub(".*nl", "", links2[[t]])
+          } else {
+            links_grepl2[[t]] <- NA
+          }
         }
-      } else {
-        links_sub3[[z]] <- NA
+        links2 <- unlist(links2)
+        links_sub2 <- unlist(links_sub2)
+        links_grepl2 <- links2[which(grepl("gemeenteraad|Gemeenteraad|samenstelling|Samenstelling|wie-is-wie|raad|Raad|organisatie|Organisatie|
+                                         raadsleden|Raadsleden|bestuur", 
+                                           links_sub2) & !grepl("Vergaderingen|vergaderingen|verordeningen|whatsapp|RSS|rss|Nieuws|nieuws", links_sub2))]
+        links_grepl2 <- unique(unlist(links_grepl2))
+        
+        # links3 <- list()
+        # links_sub3 <- list()
+        # links_grepl3 <- list()
+        # for (z in seq_along(links_grepl2)) {
+        #   if (tryCatch({
+        #     LinkExtractor(links_grepl2[z])$InternalLinks
+        #     TRUE
+        #   }, error=function(e) FALSE)) {
+        #     if (length(LinkExtractor(links_grepl2[z])$InternalLinks) != 0) {
+        #       links3[[z]] <- LinkExtractor(links_grepl2[z])$InternalLinks
+        #       links_sub3[[z]] <- gsub(".*nl", "", links3[[z]])
+        #     }
+        #   } else {
+        #     links_sub3[[z]] <- NA
+        #   }
+        # }
+        # links3 <- unlist(links3)
+        # links_sub3 <- unlist(links_sub3)
+        # links_grepl3 <- links3[which(grepl("gemeenteraad|Gemeenteraad|samenstelling|Samenstelling|wie-is-wie|raad|Raad|organisatie|Organisatie|raadsleden|Raadsleden",
+        #                                    links_sub3) & !grepl("Vergaderingen|vergaderingen|verordeningen|whatsapp|RSS|rss|Nieuws|nieuws", links_sub3))]
+        # links_grepl3 <- unique(unlist(links_grepl3))
+        
+        links_merge <- unique(c(links_grepl, links_grepl2))
+        links_merge <- links_merge[which(!grepl("whatsapp|griffie|Griffie", links_merge))]
+        
+        samenstelling_gemeenteraad <- links_merge[which(grepl("samenstelling-gemeenteraad", links_merge))]
+        gemeenteraad_samenstelling <- links_merge[which(grepl("gemeenteraad-samenstelling", links_merge))]
+        samenstelling_raad <- links_merge[which(grepl("samenstelling-raad", links_merge))]
+        Samenstelling_gemeenteraad <- links_merge[which(grepl("Samenstelling_gemeenteraad|samenstelling_gemeenteraad", links_merge))]
+        wie <- links_merge[which(grepl("Wie_zitten_er_in_de_gemeenteraad|wie_zitten_er_in_de_gemeenteraad|wie-zitten-er-in-de-gemeenteraad|
+                                     Wie-zitten-er-in-de-gemeenteraad", links_merge))]
+        
+        gemeentes$url[i] <- ifelse(length(samenstelling_gemeenteraad) > 0, samenstelling_gemeenteraad,
+                                   ifelse(length(gemeenteraad_samenstelling) > 0, gemeenteraad_samenstelling, 
+                                          ifelse(length(samenstelling_raad) > 0, samenstelling_raad,
+                                                 ifelse(length(Samenstelling_gemeenteraad) > 0, Samenstelling_gemeenteraad, 
+                                                        ifelse(length(wie) > 0, wie, NA)))))
+        
+        if (length(links_merge) > 0 & is.na(gemeentes$url[i]) & tryCatch({
+          for (l in seq_along(links_merge)) {
+            links_merge[l] %>%
+              read_html()
+          }
+          TRUE
+        }, error=function(e) FALSE)) {
+          lengths <- NA
+          for (j in seq_along(links_merge)) {
+            lengths[j] <- length(links_merge[j] %>%
+                                   read_html() %>%
+                                   html_nodes("a") %>%
+                                   html_attr("href"))
+          }
+          gemeentes$url[i] <- links_merge[which.max(lengths)] 
+        }
       }
-    }
-    links3 <- unlist(links3)
-    links_sub3 <- unlist(links_sub3)
-    links_grepl3 <- links3[which(grepl("gemeenteraad|Gemeenteraad|samenstelling|Samenstelling|wie-is-wie|raad|Raad|organisatie|Organisatie|raadsleden|Raadsleden",
-                                       links_sub3) & !grepl("Vergaderingen|vergaderingen", links_sub3))]
-    links_grepl3 <- unique(unlist(links_grepl3))
-    
-    links_merge <- unique(c(links_grepl, links_grepl2, links_grepl3))
-    
-    samenstelling_gemeenteraad <- links_merge[which(grepl("samenstelling-gemeenteraad", links_merge))]
-    gemeenteraad_samenstelling <- links_merge[which(grepl("gemeenteraad-samenstelling", links_merge))]
-    samenstelling_raad <- links_merge[which(grepl("samenstelling-raad", links_merge))]
-    Samenstelling_gemeenteraad <- links_merge[which(grepl("Samenstelling_gemeenteraad|samenstelling_gemeenteraad", links_merge))]
-    
-    gemeentes$extern_url[41] <- ifelse(length(samenstelling_gemeenteraad) > 0, samenstelling_gemeenteraad,
-                                      ifelse(length(gemeenteraad_samenstelling) > 0, gemeenteraad_samenstelling, 
-                                             ifelse(length(samenstelling_raad) > 0, samenstelling_raad,
-                                                    ifelse(length(Samenstelling_gemeenteraad) > 0, Samenstelling_gemeenteraad, NA))))
-    
-    if (length(links_merge) > 0 & is.na(gemeentes$extern_url[41]) & tryCatch({
-      for (l in seq_along(links_merge)) {
-        links_merge[l] %>%
-          read_html()
-      }
-      TRUE
-    }, error=function(e) FALSE)) {
-      lengths <- NA
-      for (j in seq_along(links_merge)) {
-        lengths[j] <- length(links_merge[j] %>%
-                               read_html() %>%
-                               html_nodes("a") %>%
-                               html_attr("href"))
-      }
-      gemeentes$extern_url[41] <- links_merge[which.max(lengths)] 
     }
   }
 }
 
-# get urls of all members
-gemeentes$extern_urls <- NA
 
-j <- 1
-for (j in seq_along(gemeentes$extern_urls)) {
-  
-  if (!is.na(gemeentes$extern_url[[j]])) {
-    
-    gemeentes$extern_urls[j] <- list(unique((gemeentes$extern_url[[3]] %>%  
-                                               read_html() %>% 
-                                               html_nodes("h2") %>%
-                                               html_attr("href"))[which(grepl("nl/leden/lid/", (gemeentes$extern_url[[3]] %>%   
-                                                                                                  read_html() %>% 
-                                                                                                  html_nodes("a") %>%
-                                                                                                  html_attr("href"))))]))
-    
-  } else {
-    
-    NA
-    
+# GEMEENTERAAD
+for (i in seq_along(gemeentes$Gemeenteraad)) {
+  if (is.na(gemeentes$ibabs[i]) & is.na(gemeentes$notubiz[i]) & is.na(gemeentes$url[i])) {
+    if (!is.na(gemeentes$Gemeenteraad[i])) {
+      if (tryCatch({
+        LinkExtractor(gemeentes$Gemeenteraad[i])
+        TRUE
+      }, error=function(e) FALSE)) {
+        
+        links_internal <- LinkExtractor(gemeentes$Gemeenteraad[i])$InternalLinks
+        links_external <- LinkExtractor(gemeentes$Gemeenteraad[i])$ExternalLinks
+        links <- c(links_internal, links_external)
+        links_sub <- sub(".*nl", "", links)
+        links_grepl <- links[which(grepl("gemeenteraad|Gemeenteraad|samenstelling|Samenstelling|wie-is-wie|raad|Raad|organisatie|Organisatie|
+                                       raadsleden|Raadsleden|Bestuur|bestuur|inwoners", 
+                                         links_sub) & !grepl("Vergaderingen|vergaderingen|verordeningen|whatsapp|RSS|rss|Nieuws|nieuws", links_sub))]
+        links2 <- list()
+        links_sub2 <- list()
+        links_grepl2 <- list()
+        for (t in seq_along(links_grepl)) {
+          if (length(LinkExtractor(links_grepl[t])$InternalLinks) != 0) {
+            links2[[t]] <- LinkExtractor(links_grepl[t])$InternalLinks
+            links_sub2[[t]] <- gsub(".*nl", "", links2[[t]])
+          } else {
+            links_grepl2[[t]] <- NA
+          }
+        }
+        links2 <- unlist(links2)
+        links_sub2 <- unlist(links_sub2)
+        links_grepl2 <- links2[which(grepl("gemeenteraad|Gemeenteraad|samenstelling|Samenstelling|wie-is-wie|raad|Raad|organisatie|Organisatie|
+                                         raadsleden|Raadsleden|bestuur", 
+                                           links_sub2) & !grepl("Vergaderingen|vergaderingen|verordeningen|whatsapp|RSS|rss|Nieuws|nieuws", links_sub2))]
+        links_grepl2 <- unique(unlist(links_grepl2))
+        
+        # links3 <- list()
+        # links_sub3 <- list()
+        # links_grepl3 <- list()
+        # for (z in seq_along(links_grepl2)) {
+        #   if (tryCatch({
+        #     LinkExtractor(links_grepl2[z])$InternalLinks
+        #     TRUE
+        #   }, error=function(e) FALSE)) {
+        #     if (length(LinkExtractor(links_grepl2[z])$InternalLinks) != 0) {
+        #       links3[[z]] <- LinkExtractor(links_grepl2[z])$InternalLinks
+        #       links_sub3[[z]] <- gsub(".*nl", "", links3[[z]])
+        #     }
+        #   } else {
+        #     links_sub3[[z]] <- NA
+        #   }
+        # }
+        # links3 <- unlist(links3)
+        # links_sub3 <- unlist(links_sub3)
+        # links_grepl3 <- links3[which(grepl("gemeenteraad|Gemeenteraad|samenstelling|Samenstelling|wie-is-wie|raad|Raad|organisatie|Organisatie|raadsleden|Raadsleden",
+        #                                    links_sub3) & !grepl("Vergaderingen|vergaderingen|verordeningen|whatsapp|RSS|rss|Nieuws|nieuws", links_sub3))]
+        # links_grepl3 <- unique(unlist(links_grepl3))
+        
+        links_merge <- unique(c(links_grepl, links_grepl2))
+        links_merge <- links_merge[which(!grepl("whatsapp|griffie|Griffie", links_merge))]
+        
+        for (g in seq_along(links_merge)) {
+          if (str_count(links_merge[g], ".html") > 1) {
+            string <- str_split(links_merge[g], "/")[[1]][(which(grepl(".html", str_split(links_merge[g], "/")[[1]]))[1])]
+            links_merge[g] <- gsub(paste0("/", string), "", links_merge[g])
+          }
+        }
+        
+        teller <- 1
+        delete <- numeric()
+        for (q in seq_along(links_merge)) {
+          if (tryCatch({
+            links_merge[q] %>%
+              read_html()
+            FALSE
+          }, error=function(e) TRUE)) {
+            delete[teller] <- q
+            teller <- teller + 1
+          }
+        }
+        links_merge <- links_merge[-delete]
+        
+        samenstelling_gemeenteraad <- links_merge[which(grepl("samenstelling-gemeenteraad", links_merge))]
+        gemeenteraad_samenstelling <- links_merge[which(grepl("gemeenteraad-samenstelling", links_merge))]
+        samenstelling_raad <- links_merge[which(grepl("samenstelling-raad", links_merge))]
+        Samenstelling_gemeenteraad <- links_merge[which(grepl("Samenstelling_gemeenteraad|samenstelling_gemeenteraad", links_merge))]
+        wie <- links_merge[which(grepl("Wie_zitten_er_in_de_gemeenteraad|wie_zitten_er_in_de_gemeenteraad|wie-zitten-er-in-de-gemeenteraad|
+                                     Wie-zitten-er-in-de-gemeenteraad", links_merge))]
+        
+        gemeentes$url[i] <- ifelse(length(samenstelling_gemeenteraad) > 0, samenstelling_gemeenteraad,
+                                   ifelse(length(gemeenteraad_samenstelling) > 0, gemeenteraad_samenstelling, 
+                                          ifelse(length(samenstelling_raad) > 0, samenstelling_raad,
+                                                 ifelse(length(Samenstelling_gemeenteraad) > 0, Samenstelling_gemeenteraad, 
+                                                        ifelse(length(wie) > 0, wie, NA)))))
+        
+        
+        if (length(links_merge) > 0 & is.na(gemeentes$url[i]) 
+            #     & tryCatch({
+            #   for (l in seq_along(links_merge)) {
+            #     links_merge[l] %>%
+            #       read_html()
+            #   }
+            #   TRUE
+            # }, error=function(e) FALSE)
+        ) {
+          lengths <- NA
+          for (j in seq_along(links_merge)) {
+            lengths[j] <- length(links_merge[j] %>%
+                                   read_html() %>%
+                                   html_nodes("a") %>%
+                                   html_attr("href"))
+          }
+          gemeentes$url[i] <- links_merge[which.max(lengths)] 
+        }
+      }
+    }
   }
-  
-  j <- j+1
-  
 }
 
-# met één site voor alle leden
+# RAAD
+for (i in seq_along(gemeentes$Raad)) {
+  if (is.na(gemeentes$ibabs[i]) & is.na(gemeentes$notubiz[i]) & is.na(gemeentes$url[i])) {
+    if (!is.na(gemeentes$Raad[i])) {
+      if (tryCatch({
+        LinkExtractor(gemeentes$Raad[i])
+        TRUE
+      }, error=function(e) FALSE)) {
+        
+        links_internal <- LinkExtractor(gemeentes$Raad[i])$InternalLinks
+        links_external <- LinkExtractor(gemeentes$Raad[i])$ExternalLinks
+        links <- c(links_internal, links_external)
+        links_sub <- sub(".*nl", "", links)
+        links_grepl <- links[which(grepl("gemeenteraad|Gemeenteraad|samenstelling|Samenstelling|wie-is-wie|raad|Raad|organisatie|Organisatie|
+                                       raadsleden|Raadsleden|Bestuur|bestuur|inwoners", 
+                                         links_sub) & !grepl("Vergaderingen|vergaderingen|verordeningen|whatsapp|RSS|rss|Nieuws|nieuws", links_sub))]
+        links2 <- list()
+        links_sub2 <- list()
+        links_grepl2 <- list()
+        for (t in seq_along(links_grepl)) {
+          if (length(LinkExtractor(links_grepl[t])$InternalLinks) != 0) {
+            links2[[t]] <- LinkExtractor(links_grepl[t])$InternalLinks
+            links_sub2[[t]] <- gsub(".*nl", "", links2[[t]])
+          } else {
+            links_grepl2[[t]] <- NA
+          }
+        }
+        links2 <- unlist(links2)
+        links_sub2 <- unlist(links_sub2)
+        links_grepl2 <- links2[which(grepl("gemeenteraad|Gemeenteraad|samenstelling|Samenstelling|wie-is-wie|raad|Raad|organisatie|Organisatie|
+                                         raadsleden|Raadsleden|bestuur", 
+                                           links_sub2) & !grepl("Vergaderingen|vergaderingen|verordeningen|whatsapp|RSS|rss|Nieuws|nieuws", links_sub2))]
+        links_grepl2 <- unique(unlist(links_grepl2))
+        
+        # links3 <- list()
+        # links_sub3 <- list()
+        # links_grepl3 <- list()
+        # for (z in seq_along(links_grepl2)) {
+        #   if (tryCatch({
+        #     LinkExtractor(links_grepl2[z])$InternalLinks
+        #     TRUE
+        #   }, error=function(e) FALSE)) {
+        #     if (length(LinkExtractor(links_grepl2[z])$InternalLinks) != 0) {
+        #       links3[[z]] <- LinkExtractor(links_grepl2[z])$InternalLinks
+        #       links_sub3[[z]] <- gsub(".*nl", "", links3[[z]])
+        #     }
+        #   } else {
+        #     links_sub3[[z]] <- NA
+        #   }
+        # }
+        # links3 <- unlist(links3)
+        # links_sub3 <- unlist(links_sub3)
+        # links_grepl3 <- links3[which(grepl("gemeenteraad|Gemeenteraad|samenstelling|Samenstelling|wie-is-wie|raad|Raad|organisatie|Organisatie|raadsleden|Raadsleden",
+        #                                    links_sub3) & !grepl("Vergaderingen|vergaderingen|verordeningen|whatsapp|RSS|rss|Nieuws|nieuws", links_sub3))]
+        # links_grepl3 <- unique(unlist(links_grepl3))
+        
+        links_merge <- unique(c(links_grepl, links_grepl2))
+        links_merge <- links_merge[which(!grepl("whatsapp|griffie|Griffie", links_merge))]
+        years <- as.character(c(2000:(as.numeric(substr(Sys.Date(), 1, 4))-1)))
+        years <- paste(years,collapse = '|')
+        links_merge <- links_merge[which(!grepl(years, links_merge))]
+        
+        for (g in seq_along(links_merge)) {
+          if (str_count(links_merge[g], ".html") > 1) {
+            string <- str_split(links_merge[g], "/")[[1]][(which(grepl(".html", str_split(links_merge[g], "/")[[1]]))[1])]
+            links_merge[g] <- gsub(paste0("/", string), "", links_merge[g])
+          }
+        }
+        
+        teller <- 1
+        delete <- numeric()
+        for (q in seq_along(links_merge)) {
+          if (tryCatch({
+            links_merge[q] %>%
+              read_html()
+            FALSE
+          }, error=function(e) TRUE)) {
+            delete[teller] <- q
+            teller <- teller + 1
+          }
+        }
+        
+        if (length(delete) > 0) {
+          links_merge <- links_merge[-delete] 
+        }
+        
+        samenstelling_gemeenteraad <- links_merge[which(grepl("samenstelling-gemeenteraad", links_merge))]
+        gemeenteraad_samenstelling <- links_merge[which(grepl("gemeenteraad-samenstelling", links_merge))]
+        samenstelling_raad <- links_merge[which(grepl("samenstelling-raad", links_merge))]
+        Samenstelling_gemeenteraad <- links_merge[which(grepl("Samenstelling_gemeenteraad|samenstelling_gemeenteraad", links_merge))]
+        wie <- links_merge[which(grepl("Wie_zitten_er_in_de_gemeenteraad|wie_zitten_er_in_de_gemeenteraad|wie-zitten-er-in-de-gemeenteraad|
+                                     Wie-zitten-er-in-de-gemeenteraad", links_merge))]
+        
+        gemeentes$url[i] <- ifelse(length(samenstelling_gemeenteraad) > 0, samenstelling_gemeenteraad,
+                                   ifelse(length(gemeenteraad_samenstelling) > 0, gemeenteraad_samenstelling, 
+                                          ifelse(length(samenstelling_raad) > 0, samenstelling_raad,
+                                                 ifelse(length(Samenstelling_gemeenteraad) > 0, Samenstelling_gemeenteraad, 
+                                                        ifelse(length(wie) > 0, wie, NA)))))
+        
+        
+        if (length(links_merge) > 0 & is.na(gemeentes$url[i])) {
+          lengths <- NA
+          for (j in seq_along(links_merge)) {
+            lengths[j] <- length(links_merge[j] %>%
+                                   read_html() %>%
+                                   html_nodes("a") %>%
+                                   html_attr("href"))
+          }
+          gemeentes$url[i] <- links_merge[which.max(lengths)] 
+        }
+      }
+    }
+  }
+}
+
+# RIS
+for (i in seq_along(gemeentes$ris)) {
+  if (is.na(gemeentes$ibabs[i]) & is.na(gemeentes$notubiz[i]) & is.na(gemeentes$url[i])) {
+    if (!is.na(gemeentes$ris[i])) {
+      if (tryCatch({
+        LinkExtractor(gemeentes$ris[i])
+        TRUE
+      }, error=function(e) FALSE)) {
+        
+        links_internal <- LinkExtractor(gemeentes$ris[i])$InternalLinks
+        links_external <- LinkExtractor(gemeentes$ris[i])$ExternalLinks
+        links <- c(links_internal, links_external)
+        links_sub <- sub(".*nl", "", links)
+        links_grepl <- links[which(grepl("gemeenteraad|Gemeenteraad|samenstelling|Samenstelling|wie-is-wie|raad|Raad|organisatie|Organisatie|
+                                       raadsleden|Raadsleden|Bestuur|bestuur|inwoners", 
+                                         links_sub) & !grepl("Vergaderingen|vergaderingen|verordeningen|whatsapp|RSS|rss|Nieuws|nieuws", links_sub))]
+        links2 <- list()
+        links_sub2 <- list()
+        links_grepl2 <- list()
+        for (t in seq_along(links_grepl)) {
+          if (length(LinkExtractor(links_grepl[t])$InternalLinks) != 0) {
+            links2[[t]] <- LinkExtractor(links_grepl[t])$InternalLinks
+            links_sub2[[t]] <- gsub(".*nl", "", links2[[t]])
+          } else {
+            links_grepl2[[t]] <- NA
+          }
+        }
+        links2 <- unlist(links2)
+        links_sub2 <- unlist(links_sub2)
+        links_grepl2 <- links2[which(grepl("gemeenteraad|Gemeenteraad|samenstelling|Samenstelling|wie-is-wie|raad|Raad|organisatie|Organisatie|
+                                         raadsleden|Raadsleden|bestuur", 
+                                           links_sub2) & !grepl("Vergaderingen|vergaderingen|verordeningen|whatsapp|RSS|rss|Nieuws|nieuws", links_sub2))]
+        links_grepl2 <- unique(unlist(links_grepl2))
+        
+        # links3 <- list()
+        # links_sub3 <- list()
+        # links_grepl3 <- list()
+        # for (z in seq_along(links_grepl2)) {
+        #   if (tryCatch({
+        #     LinkExtractor(links_grepl2[z])$InternalLinks
+        #     TRUE
+        #   }, error=function(e) FALSE)) {
+        #     if (length(LinkExtractor(links_grepl2[z])$InternalLinks) != 0) {
+        #       links3[[z]] <- LinkExtractor(links_grepl2[z])$InternalLinks
+        #       links_sub3[[z]] <- gsub(".*nl", "", links3[[z]])
+        #     }
+        #   } else {
+        #     links_sub3[[z]] <- NA
+        #   }
+        # }
+        # links3 <- unlist(links3)
+        # links_sub3 <- unlist(links_sub3)
+        # links_grepl3 <- links3[which(grepl("gemeenteraad|Gemeenteraad|samenstelling|Samenstelling|wie-is-wie|raad|Raad|organisatie|Organisatie|raadsleden|Raadsleden",
+        #                                    links_sub3) & !grepl("Vergaderingen|vergaderingen|verordeningen|whatsapp|RSS|rss|Nieuws|nieuws", links_sub3))]
+        # links_grepl3 <- unique(unlist(links_grepl3))
+        
+        links_merge <- unique(c(links_grepl, links_grepl2))
+        links_merge <- links_merge[which(!grepl("whatsapp|griffie|Griffie", links_merge))]
+        years <- as.character(c(2000:(as.numeric(substr(Sys.Date(), 1, 4))-1)))
+        years <- paste(years,collapse = '|')
+        links_merge <- links_merge[which(!grepl(years, links_merge))]
+        
+        for (g in seq_along(links_merge)) {
+          if (str_count(links_merge[g], ".html") > 1) {
+            string <- str_split(links_merge[g], "/")[[1]][(which(grepl(".html", str_split(links_merge[g], "/")[[1]]))[1])]
+            links_merge[g] <- gsub(paste0("/", string), "", links_merge[g])
+          }
+        }
+        
+        teller <- 1
+        delete <- numeric()
+        for (q in seq_along(links_merge)) {
+          if (tryCatch({
+            links_merge[q] %>%
+              read_html()
+            FALSE
+          }, error=function(e) TRUE)) {
+            delete[teller] <- q
+            teller <- teller + 1
+          }
+        }
+        links_merge <- links_merge[-delete]
+        
+        samenstelling_gemeenteraad <- links_merge[which(grepl("samenstelling-gemeenteraad", links_merge))]
+        gemeenteraad_samenstelling <- links_merge[which(grepl("gemeenteraad-samenstelling", links_merge))]
+        samenstelling_raad <- links_merge[which(grepl("samenstelling-raad", links_merge))]
+        Samenstelling_gemeenteraad <- links_merge[which(grepl("Samenstelling_gemeenteraad|samenstelling_gemeenteraad", links_merge))]
+        wie <- links_merge[which(grepl("Wie_zitten_er_in_de_gemeenteraad|wie_zitten_er_in_de_gemeenteraad|wie-zitten-er-in-de-gemeenteraad|
+                                     Wie-zitten-er-in-de-gemeenteraad", links_merge))]
+        
+        gemeentes$url[i] <- ifelse(length(samenstelling_gemeenteraad) > 0, samenstelling_gemeenteraad,
+                                   ifelse(length(gemeenteraad_samenstelling) > 0, gemeenteraad_samenstelling, 
+                                          ifelse(length(samenstelling_raad) > 0, samenstelling_raad,
+                                                 ifelse(length(Samenstelling_gemeenteraad) > 0, Samenstelling_gemeenteraad, 
+                                                        ifelse(length(wie) > 0, wie, NA)))))
+        
+        
+        if (length(links_merge) > 0 & is.na(gemeentes$url[i])) {
+          lengths <- NA
+          for (j in seq_along(links_merge)) {
+            lengths[j] <- length(links_merge[j] %>%
+                                   read_html() %>%
+                                   html_nodes("a") %>%
+                                   html_attr("href"))
+          }
+          gemeentes$url[i] <- links_merge[which.max(lengths)] 
+        }
+      }
+    }
+  }
+}
+
+# BESTUUR
+for (i in seq_along(gemeentes$Bestuur)) {
+  if (is.na(gemeentes$ibabs[i]) & is.na(gemeentes$notubiz[i]) & is.na(gemeentes$url[i])) {
+    if (!is.na(gemeentes$Bestuur[i])) {
+      if (tryCatch({
+        LinkExtractor(gemeentes$Bestuur[i])
+        TRUE
+      }, error=function(e) FALSE)) {
+        
+        links_internal <- LinkExtractor(gemeentes$Bestuur[i])$InternalLinks
+        links_external <- LinkExtractor(gemeentes$Bestuur[i])$ExternalLinks
+        links <- c(links_internal, links_external)
+        links_sub <- sub(".*nl", "", links)
+        links_grepl <- links[which(grepl("gemeenteraad|Gemeenteraad|samenstelling|Samenstelling|wie-is-wie|raad|Raad|organisatie|Organisatie|
+                                       raadsleden|Raadsleden|Bestuur|bestuur|inwoners", 
+                                         links_sub) & !grepl("Vergaderingen|vergaderingen|verordeningen|whatsapp|RSS|rss|Nieuws|nieuws", links_sub))]
+        links2 <- list()
+        links_sub2 <- list()
+        links_grepl2 <- list()
+        for (t in seq_along(links_grepl)) {
+          if (length(LinkExtractor(links_grepl[t])$InternalLinks) != 0) {
+            links2[[t]] <- LinkExtractor(links_grepl[t])$InternalLinks
+            links_sub2[[t]] <- gsub(".*nl", "", links2[[t]])
+          } else {
+            links_grepl2[[t]] <- NA
+          }
+        }
+        links2 <- unlist(links2)
+        links_sub2 <- unlist(links_sub2)
+        links_grepl2 <- links2[which(grepl("gemeenteraad|Gemeenteraad|samenstelling|Samenstelling|wie-is-wie|raad|Raad|organisatie|Organisatie|
+                                         raadsleden|Raadsleden|bestuur", 
+                                           links_sub2) & !grepl("Vergaderingen|vergaderingen|verordeningen|whatsapp|RSS|rss|Nieuws|nieuws", links_sub2))]
+        links_grepl2 <- unique(unlist(links_grepl2))
+        
+        # links3 <- list()
+        # links_sub3 <- list()
+        # links_grepl3 <- list()
+        # for (z in seq_along(links_grepl2)) {
+        #   if (tryCatch({
+        #     LinkExtractor(links_grepl2[z])$InternalLinks
+        #     TRUE
+        #   }, error=function(e) FALSE)) {
+        #     if (length(LinkExtractor(links_grepl2[z])$InternalLinks) != 0) {
+        #       links3[[z]] <- LinkExtractor(links_grepl2[z])$InternalLinks
+        #       links_sub3[[z]] <- gsub(".*nl", "", links3[[z]])
+        #     }
+        #   } else {
+        #     links_sub3[[z]] <- NA
+        #   }
+        # }
+        # links3 <- unlist(links3)
+        # links_sub3 <- unlist(links_sub3)
+        # links_grepl3 <- links3[which(grepl("gemeenteraad|Gemeenteraad|samenstelling|Samenstelling|wie-is-wie|raad|Raad|organisatie|Organisatie|raadsleden|Raadsleden",
+        #                                    links_sub3) & !grepl("Vergaderingen|vergaderingen|verordeningen|whatsapp|RSS|rss|Nieuws|nieuws", links_sub3))]
+        # links_grepl3 <- unique(unlist(links_grepl3))
+        
+        links_merge <- unique(c(links_grepl, links_grepl2))
+        links_merge <- links_merge[which(!grepl("whatsapp|griffie|Griffie", links_merge))]
+        years <- as.character(c(2000:(as.numeric(substr(Sys.Date(), 1, 4))-1)))
+        years <- paste(years,collapse = '|')
+        links_merge <- links_merge[which(!grepl(years, links_merge))]
+        
+        for (g in seq_along(links_merge)) {
+          if (str_count(links_merge[g], ".html") > 1) {
+            string <- str_split(links_merge[g], "/")[[1]][(which(grepl(".html", str_split(links_merge[g], "/")[[1]]))[1])]
+            links_merge[g] <- gsub(paste0("/", string), "", links_merge[g])
+          }
+        }
+        
+        teller <- 1
+        delete <- numeric()
+        for (q in seq_along(links_merge)) {
+          if (tryCatch({
+            links_merge[q] %>%
+              read_html()
+            FALSE
+          }, error=function(e) TRUE)) {
+            delete[teller] <- q
+            teller <- teller + 1
+          }
+        }
+        links_merge <- links_merge[-delete]
+        
+        samenstelling_gemeenteraad <- links_merge[which(grepl("samenstelling-gemeenteraad", links_merge))]
+        gemeenteraad_samenstelling <- links_merge[which(grepl("gemeenteraad-samenstelling", links_merge))]
+        samenstelling_raad <- links_merge[which(grepl("samenstelling-raad", links_merge))]
+        Samenstelling_gemeenteraad <- links_merge[which(grepl("Samenstelling_gemeenteraad|samenstelling_gemeenteraad", links_merge))]
+        wie <- links_merge[which(grepl("Wie_zitten_er_in_de_gemeenteraad|wie_zitten_er_in_de_gemeenteraad|wie-zitten-er-in-de-gemeenteraad|
+                                     Wie-zitten-er-in-de-gemeenteraad", links_merge))]
+        
+        gemeentes$url[i] <- ifelse(length(samenstelling_gemeenteraad) > 0, samenstelling_gemeenteraad,
+                                   ifelse(length(gemeenteraad_samenstelling) > 0, gemeenteraad_samenstelling, 
+                                          ifelse(length(samenstelling_raad) > 0, samenstelling_raad,
+                                                 ifelse(length(Samenstelling_gemeenteraad) > 0, Samenstelling_gemeenteraad, 
+                                                        ifelse(length(wie) > 0, wie, NA)))))
+        
+        
+        if (length(links_merge) > 0 & is.na(gemeentes$url[i])) {
+          lengths <- NA
+          for (j in seq_along(links_merge)) {
+            lengths[j] <- length(links_merge[j] %>%
+                                   read_html() %>%
+                                   html_nodes("a") %>%
+                                   html_attr("href"))
+          }
+          gemeentes$url[i] <- links_merge[which.max(lengths)] 
+        }
+      }
+    }
+  }
+}
+
+# RAADSINFORMATIE
+# if (is.na(gemeentes$ibabs[179]) & is.na(gemeentes$notubiz[179]) & is.na(gemeentes$url[179])) {
+#   if (!is.na(gemeentes$Raadsinformatie[179])) {
+#     if (tryCatch({
+#       LinkExtractor(gemeentes$Raadsinformatie[179])
+#       TRUE
+#     }, error=function(e) FALSE)) {
+#       
+#       links_internal <- LinkExtractor(gemeentes$Raadsinformatie[179])$InternalLinks
+#       links_external <- LinkExtractor(gemeentes$Raadsinformatie[179])$ExternalLinks
+#       links <- c(links_internal, links_external)
+#       links_sub <- sub(".*nl", "", links)
+#       links_grepl <- links[which(grepl("gemeenteraad|Gemeenteraad|samenstelling|Samenstelling|wie-is-wie|raad|Raad|organisatie|Organisatie|
+#                                        raadsleden|Raadsleden|Bestuur|bestuur|inwoners", 
+#                                        links_sub) & !grepl("Vergaderingen|vergaderingen|verordeningen|whatsapp|RSS|rss|Nieuws|nieuws", links_sub))]
+#       links2 <- list()
+#       links_sub2 <- list()
+#       links_grepl2 <- list()
+#       for (t in seq_along(links_grepl)) {
+#         if (length(LinkExtractor(links_grepl[t])$InternalLinks) != 0) {
+#           links2[[t]] <- LinkExtractor(links_grepl[t])$InternalLinks
+#           links_sub2[[t]] <- gsub(".*nl", "", links2[[t]])
+#         } else {
+#           links_grepl2[[t]] <- NA
+#         }
+#       }
+#       links2 <- unlist(links2)
+#       links_sub2 <- unlist(links_sub2)
+#       links_grepl2 <- links2[which(grepl("gemeenteraad|Gemeenteraad|samenstelling|Samenstelling|wie-is-wie|raad|Raad|organisatie|Organisatie|
+#                                          raadsleden|Raadsleden|bestuur", 
+#                                          links_sub2) & !grepl("Vergaderingen|vergaderingen|verordeningen|whatsapp|RSS|rss|Nieuws|nieuws", links_sub2))]
+#       links_grepl2 <- unique(unlist(links_grepl2))
+#       
+#       # links3 <- list()
+#       # links_sub3 <- list()
+#       # links_grepl3 <- list()
+#       # for (z in seq_along(links_grepl2)) {
+#       #   if (tryCatch({
+#       #     LinkExtractor(links_grepl2[z])$InternalLinks
+#       #     TRUE
+#       #   }, error=function(e) FALSE)) {
+#       #     if (length(LinkExtractor(links_grepl2[z])$InternalLinks) != 0) {
+#       #       links3[[z]] <- LinkExtractor(links_grepl2[z])$InternalLinks
+#       #       links_sub3[[z]] <- gsub(".*nl", "", links3[[z]])
+#       #     }
+#       #   } else {
+#       #     links_sub3[[z]] <- NA
+#       #   }
+#       # }
+#       # links3 <- unlist(links3)
+#       # links_sub3 <- unlist(links_sub3)
+#       # links_grepl3 <- links3[which(grepl("gemeenteraad|Gemeenteraad|samenstelling|Samenstelling|wie-is-wie|raad|Raad|organisatie|Organisatie|raadsleden|Raadsleden",
+#       #                                    links_sub3) & !grepl("Vergaderingen|vergaderingen|verordeningen|whatsapp|RSS|rss|Nieuws|nieuws", links_sub3))]
+#       # links_grepl3 <- unique(unlist(links_grepl3))
+#       
+#       links_merge <- unique(c(links_grepl, links_grepl2))
+#       links_merge <- links_merge[which(!grepl("whatsapp|griffie|Griffie", links_merge))]
+#       years <- as.character(c(2000:(as.numeric(substr(Sys.Date(), 1, 4))-1)))
+#       years <- paste(years,collapse = '|')
+#       links_merge <- links_merge[which(!grepl(years, links_merge))]
+#       
+#       for (g in seq_along(links_merge)) {
+#         if (str_count(links_merge[g], ".html") > 1) {
+#           string <- str_split(links_merge[g], "/")[[1]][(which(grepl(".html", str_split(links_merge[g], "/")[[1]]))[1])]
+#           links_merge[g] <- gsub(paste0("/", string), "", links_merge[g])
+#         }
+#       }
+#       
+#       teller <- 1
+#       delete <- numeric()
+#       for (q in seq_along(links_merge)) {
+#         if (tryCatch({
+#           links_merge[q] %>%
+#             read_html()
+#           FALSE
+#         }, error=function(e) TRUE)) {
+#           delete[teller] <- q
+#           teller <- teller + 1
+#         }
+#       }
+#       links_merge <- links_merge[-delete]
+#       
+#       samenstelling_gemeenteraad <- links_merge[which(grepl("samenstelling-gemeenteraad", links_merge))]
+#       gemeenteraad_samenstelling <- links_merge[which(grepl("gemeenteraad-samenstelling", links_merge))]
+#       samenstelling_raad <- links_merge[which(grepl("samenstelling-raad", links_merge))]
+#       Samenstelling_gemeenteraad <- links_merge[which(grepl("Samenstelling_gemeenteraad|samenstelling_gemeenteraad", links_merge))]
+#       wie <- links_merge[which(grepl("Wie_zitten_er_in_de_gemeenteraad|wie_zitten_er_in_de_gemeenteraad|wie-zitten-er-in-de-gemeenteraad|
+#                                      Wie-zitten-er-in-de-gemeenteraad", links_merge))]
+#       
+#       gemeentes$url[179] <- ifelse(length(samenstelling_gemeenteraad) > 0, samenstelling_gemeenteraad,
+#                                    ifelse(length(gemeenteraad_samenstelling) > 0, gemeenteraad_samenstelling, 
+#                                           ifelse(length(samenstelling_raad) > 0, samenstelling_raad,
+#                                                  ifelse(length(Samenstelling_gemeenteraad) > 0, Samenstelling_gemeenteraad, 
+#                                                         ifelse(length(wie) > 0, wie, NA)))))
+#       
+#       
+#       if (length(links_merge) > 0 & is.na(gemeentes$url[179])) {
+#         lengths <- NA
+#         for (j in seq_along(links_merge)) {
+#           lengths[j] <- length(links_merge[j] %>%
+#                                  read_html() %>%
+#                                  html_nodes("a") %>%
+#                                  html_attr("href"))
+#         }
+#         gemeentes$url[179] <- links_merge[which.max(lengths)] 
+#       }
+#     }
+#   }
+# }
+
+
+
+## GET URLS OF ALL MEMBERS
+
+# ONE SITE WITH ALL MEMBERS
 gemeente <- gemeentes$extern_url[[50]] %>%  
   read_html() %>% 
   html_nodes("a") %>%
@@ -1195,10 +1663,10 @@ ding <- gemeentes$extern_url[[50]] %>%
 
 session_url <- html_session(gemeentes$Website[[68]])$url
 if (session_url != gemeentes$Website[[39]]) {
-  gemeentes$Website[[1396]] <- session_url
+  gemeentes$Website[[39]] <- session_url
 }
 
-# met verschillende sites voor alle leden
+# DIFFERENT SITES FOR ALL MEMBERS
 blaricum <- gemeentes$extern_url[[41]] %>%  
   read_html() %>% 
   html_nodes("a") %>%
