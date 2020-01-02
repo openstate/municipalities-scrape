@@ -10,7 +10,7 @@ library(miceadds)
 setwd("/Users/Nele/Desktop/Internship/R/")
 
 ## SET UTF
-Sys.setlocale(locale="UTF-8" )
+Sys.setlocale(locale="UTF-8")
 
 ## read in data set from wd
 #gemeentes <- load.Rdata2("gemeentes", path=getwd())
@@ -474,6 +474,85 @@ for (i in seq_along(gemeentes$Raadsinformatie)) {
 
 gemeentes$Raadsinformatie[which(gemeentes$Raadsinformatie == "https://notubiz.nl/")] <- NA
 
+
+gemeentes$Gemeenteraad. <- str_replace(gemeentes$Website, "www.", "gemeenteraad.")
+
+for (i in seq_along(gemeentes$Gemeenteraad.)) {
+  
+  gemeentes$Gemeenteraad.[[i]] <- ifelse((tryCatch({
+    gemeentes$Gemeenteraad.[[i]] %>%
+      read_html()
+    TRUE
+  }, error=function(e) FALSE)),
+  gemeentes$Gemeenteraad.[[i]], NA)
+  
+}
+
+# detect domain change
+for (i in seq_along(gemeentes$Gemeenteraad.)) {
+  if (!is.na(gemeentes$Gemeenteraad.[i])) {
+    session_url <- html_session(gemeentes$Gemeenteraad.[[i]])$url
+    if (session_url != gemeentes$Gemeenteraad.[[i]]) {
+      print(gemeentes$Gemeenteraad.[[i]])
+      print(session_url)
+      gemeentes$Gemeenteraad.[i] <- session_url
+    } 
+  }
+}
+
+# CHECK FOR EXTERNAL WEBSITE "gemeente." -------------------------
+
+gemeentes$Gemeente. <- str_replace(gemeentes$Website, "www.", "gemeente.")
+
+for (i in seq_along(gemeentes$Gemeente.)) {
+  
+  gemeentes$Gemeente.[[i]] <- ifelse((tryCatch({
+    gemeentes$Gemeente.[[i]] %>%
+      read_html()
+    TRUE
+  }, error=function(e) FALSE)),
+  gemeentes$Gemeente.[[i]], NA)
+  
+}
+
+for (i in seq_along(gemeentes$Gemeente.)) {
+  if (!is.na(gemeentes$Gemeente.[i])) {
+    session_url <- html_session(gemeentes$Gemeente.[[i]])$url
+    if (session_url != gemeentes$Gemeente.[[i]]) {
+      print(gemeentes$Gemeente.[[i]])
+      print(session_url)
+      gemeentes$Gemeente.[i] <- session_url
+    } 
+  }
+}
+
+# CHECK FOR EXTERNAL WEBSITE "gemeentebestuur." -------------------------
+
+gemeentes$gemeentebestuur. <- str_replace(gemeentes$Website, "www.", "gemeentebestuur.")
+
+for (i in seq_along(gemeentes$gemeentebestuur.)) {
+  
+  gemeentes$gemeentebestuur.[[i]] <- ifelse((tryCatch({
+    gemeentes$gemeentebestuur.[[i]] %>%
+      read_html()
+    TRUE
+  }, error=function(e) FALSE)),
+  gemeentes$gemeentebestuur.[[i]], NA)
+  
+}
+
+for (i in seq_along(gemeentes$gemeentebestuur.)) {
+  if (!is.na(gemeentes$gemeentebestuur.[i])) {
+    session_url <- html_session(gemeentes$gemeentebestuur.[[i]])$url
+    if (session_url != gemeentes$gemeentebestuur.[[i]]) {
+      print(gemeentes$gemeentebestuur.[[i]])
+      print(session_url)
+      gemeentes$gemeentebestuur.[i] <- session_url
+    } 
+  }
+}
+
+
 # CHECK IF WEBSITE IS PART OF "GO" --------------------------------------
 
 # gemeentes$go <- NA
@@ -746,127 +825,41 @@ try[[1]][which(try[[1]] != "")]
 
 # SCRAPE WEBSITES USING AN EXTERNAL WEBSITE OR REGULAR WEBSITE ------------
 # gather urls of websites that use an external website
-gemeentes$extern <- NA
-for (i in seq_along(gemeentes$Website)) {
-  
-  if (is.na(gemeentes$ibabs_url[i]) & is.na(gemeentes$notubiz_url[i]) & is.na(gemeentes$Sitemaps[i])) {
-    
-    if (!is.na(gemeentes$ris[i])) {
-      gemeentes$extern[i] <- gemeentes$ris[i]
-    } else if (!is.na(gemeentes$Bestuur[i])) {
-      gemeentes$extern[i] <- gemeentes$Bestuur[i]
-    } else if (!is.na(gemeentes$Raad[i])) {
-      gemeentes$extern[i] <- gemeentes$Raad[i]
-    } else if (!is.na(gemeentes$Gemeenteraad[i])) {
-      gemeentes$extern[i] <- gemeentes$Gemeenteraad[i]
-    } else if (!is.na(gemeentes$Gemeenteraad.[i])) {
-      gemeentes$extern[i] <- gemeentes$Gemeenteraad.[i]
-    } else {
-      gemeentes$extern[i] <- gemeentes$Website[i]
-    } 
-  } else {
-    gemeentes$extern[i] <- NA
-  }
-  i <- i + 1
-}
-
-# detect domain change
-for (i in seq_along(gemeentes$extern)) {
-  if (!is.na(gemeentes$extern[i])) {
-    session_url <- html_session(gemeentes$extern[[i]])$url
-    if (session_url != gemeentes$extern[[i]]) {
-      print(gemeentes$extern[[i]])
-      print(session_url)
-      gemeentes$extern[i] <- session_url
-    } 
-  }
-}
-
-# get url per member of each municipality
-gemeentes$extern_url <- NA
-i <- 1
-for (i in seq_along(gemeentes$extern)) {
-  if (!is.na(gemeentes$extern[i])) {
-    if (tryCatch({
-      LinkExtractor(gemeentes$extern[i])
-      TRUE
-    }, error=function(e) FALSE)) {
-      
-      links <- LinkExtractor(gemeentes$extern[i])$InternalLinks
-      links_sub <- sub(".*nl", "", links)
-      links_grepl <- links[which(grepl("gemeenteraad|Gemeenteraad|samenstelling|Samenstelling|wie-is-wie|raad|Raad|organisatie|Organisatie|
-                                       raadsleden|Raadsleden|Bestuur|bestuur|inwoners", 
-                                       links_sub) & !grepl("Vergaderingen|vergaderingen|nieuws|verordeningen", links_sub))]
-      links2 <- list()
-      links_sub2 <- list()
-      links_grepl2 <- list()
-      for (t in seq_along(links_grepl)) {
-        if (length(LinkExtractor(links_grepl[t])$InternalLinks) != 0) {
-          links2[[t]] <- LinkExtractor(links_grepl[t])$InternalLinks
-          links_sub2[[t]] <- gsub(".*nl", "", links2[[t]])
-        } else {
-          links_grepl2[[t]] <- NA
-        }
-      }
-      links2 <- unlist(links2)
-      links_sub2 <- unlist(links_sub2)
-      links_grepl2 <- links2[which(grepl("gemeenteraad|Gemeenteraad|samenstelling|Samenstelling|wie-is-wie|raad|Raad|organisatie|Organisatie|
-                                         raadsleden|Raadsleden|bestuur", 
-                                         links_sub2) & !grepl("Vergaderingen|vergaderingen", links_sub2))]
-      links_grepl2 <- unique(unlist(links_grepl2))
-      
-      links3 <- list()
-      links_sub3 <- list()
-      links_grepl3 <- list()
-      for (z in seq_along(links_grepl2)) {
-        if (tryCatch({
-          LinkExtractor(links_grepl2[z])$InternalLinks
-          TRUE
-        }, error=function(e) FALSE)) {
-          if (length(LinkExtractor(links_grepl2[z])$InternalLinks) != 0) {
-            links3[[z]] <- LinkExtractor(links_grepl2[z])$InternalLinks
-            links_sub3[[z]] <- gsub(".*nl", "", links3[[z]])
-          }
-        } else {
-          links_sub3[[z]] <- NA
-        }
-      }
-      links3 <- unlist(links3)
-      links_sub3 <- unlist(links_sub3)
-      links_grepl3 <- links3[which(grepl("gemeenteraad|Gemeenteraad|samenstelling|Samenstelling|wie-is-wie|raad|Raad|organisatie|Organisatie|raadsleden|Raadsleden",
-                                         links_sub3) & !grepl("Vergaderingen|vergaderingen", links_sub3))]
-      links_grepl3 <- unique(unlist(links_grepl3))
-      
-      links_merge <- unique(c(links_grepl, links_grepl2, links_grepl3))
-      
-      samenstelling_gemeenteraad <- links_merge[which(grepl("samenstelling-gemeenteraad", links_merge))]
-      gemeenteraad_samenstelling <- links_merge[which(grepl("gemeenteraad-samenstelling", links_merge))]
-      samenstelling_raad <- links_merge[which(grepl("samenstelling-raad", links_merge))]
-      
-      gemeentes$extern_url[i] <- ifelse(length(samenstelling_gemeenteraad) > 0, samenstelling_gemeenteraad,
-                                          ifelse(length(gemeenteraad_samenstelling) > 0, gemeenteraad_samenstelling, 
-                                                 ifelse(length(samenstelling_raad) > 0, samenstelling_raad, NA)))
-      
-      if (length(links_merge) > 0 & is.na(gemeentes$extern_url[i]) & tryCatch({
-        for (l in seq_along(links_merge)) {
-          links_merge[l] %>%
-            read_html()
-        }
-        TRUE
-      }, error=function(e) FALSE)) {
-        lengths <- NA
-        for (j in seq_along(links_merge)) {
-          lengths[j] <- length(links_merge[j] %>%
-                                 read_html() %>%
-                                 html_nodes("a") %>%
-                                 html_attr("href"))
-        }
-        gemeentes$extern_url[i] <- links_merge[which.max(lengths)] 
-      }
-    }
-  }
-  i <- i + 1
-}
+# gemeentes$extern <- NA
+# for (i in seq_along(gemeentes$Website)) {
+#   
+#   if (is.na(gemeentes$ibabs_url[i]) & is.na(gemeentes$notubiz_url[i]) & is.na(gemeentes$Sitemaps[i])) {
+#     
+#     if (!is.na(gemeentes$ris[i])) {
+#       gemeentes$extern[i] <- gemeentes$ris[i]
+#     } else if (!is.na(gemeentes$Bestuur[i])) {
+#       gemeentes$extern[i] <- gemeentes$Bestuur[i]
+#     } else if (!is.na(gemeentes$Raad[i])) {
+#       gemeentes$extern[i] <- gemeentes$Raad[i]
+#     } else if (!is.na(gemeentes$Gemeenteraad[i])) {
+#       gemeentes$extern[i] <- gemeentes$Gemeenteraad[i]
+#     } else if (!is.na(gemeentes$Gemeenteraad.[i])) {
+#       gemeentes$extern[i] <- gemeentes$Gemeenteraad.[i]
+#     } else {
+#       gemeentes$extern[i] <- gemeentes$Website[i]
+#     } 
+#   } else {
+#     gemeentes$extern[i] <- NA
+#   }
+#   i <- i + 1
+# }
+# 
+# # detect domain change
+# for (i in seq_along(gemeentes$extern)) {
+#   if (!is.na(gemeentes$extern[i])) {
+#     session_url <- html_session(gemeentes$extern[[i]])$url
+#     if (session_url != gemeentes$extern[[i]]) {
+#       print(gemeentes$extern[[i]])
+#       print(session_url)
+#       gemeentes$extern[i] <- session_url
+#     } 
+#   }
+# }
 
 # warum funktioniert amsersfort nicht
 gemeentes$extern[45] <- gemeentes$Website[45]
@@ -875,9 +868,10 @@ gemeentes$url <- NA
 links_merge <- numeric()
 
 
-## LOOP TROUGH ALL POSSIBLE SITES
+## LOOP TROUGH ALL POSSIBLE SITES TO GET URL OF GEMEENTERAAD
 
 # REGULAR GEMEENTE
+gemeentes$url_regular <- 0
 for (i in seq_along(gemeentes$Website)) {
   if (is.na(gemeentes$ibabs[i]) & is.na(gemeentes$notubiz[i])) {
     if (!is.na(gemeentes$Website[i])) {
@@ -934,7 +928,7 @@ for (i in seq_along(gemeentes$Website)) {
         links_grepl3 <- unique(unlist(links_grepl3))
         
         links_merge <- unique(c(links_grepl, links_grepl2, links_grepl3))
-        links_merge <- links_merge[which(!grepl("whatsapp|griffie|Griffie", links_merge))]
+        links_merge <- links_merge[which(!grepl("whatsapp|publicatie|Publicatie", links_merge))]
         
         samenstelling_gemeenteraad <- links_merge[which(grepl("samenstelling-gemeenteraad", links_merge))]
         gemeenteraad_samenstelling <- links_merge[which(grepl("gemeenteraad-samenstelling", links_merge))]
@@ -943,13 +937,13 @@ for (i in seq_along(gemeentes$Website)) {
         wie <- links_merge[which(grepl("Wie_zitten_er_in_de_gemeenteraad|wie_zitten_er_in_de_gemeenteraad|wie-zitten-er-in-de-gemeenteraad|
                                        Wie-zitten-er-in-de-gemeenteraad", links_merge))]
         
-        gemeentes$url[i] <- ifelse(length(samenstelling_gemeenteraad) > 0, samenstelling_gemeenteraad,
+        gemeentes$url_regular[i] <- ifelse(length(samenstelling_gemeenteraad) > 0, samenstelling_gemeenteraad,
                                    ifelse(length(gemeenteraad_samenstelling) > 0, gemeenteraad_samenstelling, 
                                           ifelse(length(samenstelling_raad) > 0, samenstelling_raad,
                                                  ifelse(length(Samenstelling_gemeenteraad) > 0, Samenstelling_gemeenteraad, 
                                                         ifelse(length(wie) > 0, wie, NA)))))
         
-        if (length(links_merge) > 0 & is.na(gemeentes$url[i]) & tryCatch({
+        if (length(links_merge) > 0 & is.na(gemeentes$url_regular[i]) & tryCatch({
           for (l in seq_along(links_merge)) {
             links_merge[l] %>%
               read_html()
@@ -963,12 +957,14 @@ for (i in seq_along(gemeentes$Website)) {
                                    html_nodes("a") %>%
                                    html_attr("href"))
           }
-          gemeentes$url[i] <- links_merge[which.max(lengths)] 
+          gemeentes$url_regular[i] <- links_merge[which.max(lengths)] 
         }
       }
     }
   }
 }
+
+
 
 # GEMEENTERAAD.
 for (i in seq_along(gemeentes$`Gemeenteraad.`)) {
@@ -1027,7 +1023,7 @@ for (i in seq_along(gemeentes$`Gemeenteraad.`)) {
         # links_grepl3 <- unique(unlist(links_grepl3))
         
         links_merge <- unique(c(links_grepl, links_grepl2))
-        links_merge <- links_merge[which(!grepl("whatsapp|griffie|Griffie", links_merge))]
+        links_merge <- links_merge[which(!grepl("whatsapp", links_merge))]
         
         samenstelling_gemeenteraad <- links_merge[which(grepl("samenstelling-gemeenteraad", links_merge))]
         gemeenteraad_samenstelling <- links_merge[which(grepl("gemeenteraad-samenstelling", links_merge))]
@@ -1036,13 +1032,13 @@ for (i in seq_along(gemeentes$`Gemeenteraad.`)) {
         wie <- links_merge[which(grepl("Wie_zitten_er_in_de_gemeenteraad|wie_zitten_er_in_de_gemeenteraad|wie-zitten-er-in-de-gemeenteraad|
                                      Wie-zitten-er-in-de-gemeenteraad", links_merge))]
         
-        gemeentes$url[i] <- ifelse(length(samenstelling_gemeenteraad) > 0, samenstelling_gemeenteraad,
+        gemeentes$url_gemeenteraad.[i] <- ifelse(length(samenstelling_gemeenteraad) > 0, samenstelling_gemeenteraad,
                                    ifelse(length(gemeenteraad_samenstelling) > 0, gemeenteraad_samenstelling, 
                                           ifelse(length(samenstelling_raad) > 0, samenstelling_raad,
                                                  ifelse(length(Samenstelling_gemeenteraad) > 0, Samenstelling_gemeenteraad, 
                                                         ifelse(length(wie) > 0, wie, NA)))))
         
-        if (length(links_merge) > 0 & is.na(gemeentes$url[i]) & tryCatch({
+        if (length(links_merge) > 0 & is.na(gemeentesurl_gemeenteraad.[i]) & tryCatch({
           for (l in seq_along(links_merge)) {
             links_merge[l] %>%
               read_html()
@@ -1056,7 +1052,7 @@ for (i in seq_along(gemeentes$`Gemeenteraad.`)) {
                                    html_nodes("a") %>%
                                    html_attr("href"))
           }
-          gemeentes$url[i] <- links_merge[which.max(lengths)] 
+          gemeentes$url_gemeenteraad.[i] <- links_merge[which.max(lengths)] 
         }
       }
     }
@@ -1121,7 +1117,7 @@ for (i in seq_along(gemeentes$Gemeenteraad)) {
         # links_grepl3 <- unique(unlist(links_grepl3))
         
         links_merge <- unique(c(links_grepl, links_grepl2))
-        links_merge <- links_merge[which(!grepl("whatsapp|griffie|Griffie", links_merge))]
+        links_merge <- links_merge[which(!grepl("whatsapp|publicatie|Publicatie", links_merge))]
         
         for (g in seq_along(links_merge)) {
           if (str_count(links_merge[g], ".html") > 1) {
@@ -1151,14 +1147,14 @@ for (i in seq_along(gemeentes$Gemeenteraad)) {
         wie <- links_merge[which(grepl("Wie_zitten_er_in_de_gemeenteraad|wie_zitten_er_in_de_gemeenteraad|wie-zitten-er-in-de-gemeenteraad|
                                      Wie-zitten-er-in-de-gemeenteraad", links_merge))]
         
-        gemeentes$url[i] <- ifelse(length(samenstelling_gemeenteraad) > 0, samenstelling_gemeenteraad,
+        gemeentes$url_gemeenteraad[i] <- ifelse(length(samenstelling_gemeenteraad) > 0, samenstelling_gemeenteraad,
                                    ifelse(length(gemeenteraad_samenstelling) > 0, gemeenteraad_samenstelling, 
                                           ifelse(length(samenstelling_raad) > 0, samenstelling_raad,
                                                  ifelse(length(Samenstelling_gemeenteraad) > 0, Samenstelling_gemeenteraad, 
                                                         ifelse(length(wie) > 0, wie, NA)))))
         
         
-        if (length(links_merge) > 0 & is.na(gemeentes$url[i]) 
+        if (length(links_merge) > 0 & is.na(gemeentes$url_gemeenteraad[i]) 
             #     & tryCatch({
             #   for (l in seq_along(links_merge)) {
             #     links_merge[l] %>%
@@ -1174,7 +1170,7 @@ for (i in seq_along(gemeentes$Gemeenteraad)) {
                                    html_nodes("a") %>%
                                    html_attr("href"))
           }
-          gemeentes$url[i] <- links_merge[which.max(lengths)] 
+          gemeentes$url_gemeenteraad[i] <- links_merge[which.max(lengths)] 
         }
       }
     }
@@ -1238,7 +1234,7 @@ for (i in seq_along(gemeentes$Raad)) {
         # links_grepl3 <- unique(unlist(links_grepl3))
         
         links_merge <- unique(c(links_grepl, links_grepl2))
-        links_merge <- links_merge[which(!grepl("whatsapp|griffie|Griffie", links_merge))]
+        links_merge <- links_merge[which(!grepl("whatsapp", links_merge))]
         years <- as.character(c(2000:(as.numeric(substr(Sys.Date(), 1, 4))-1)))
         years <- paste(years,collapse = '|')
         links_merge <- links_merge[which(!grepl(years, links_merge))]
@@ -1274,14 +1270,14 @@ for (i in seq_along(gemeentes$Raad)) {
         wie <- links_merge[which(grepl("Wie_zitten_er_in_de_gemeenteraad|wie_zitten_er_in_de_gemeenteraad|wie-zitten-er-in-de-gemeenteraad|
                                      Wie-zitten-er-in-de-gemeenteraad", links_merge))]
         
-        gemeentes$url[i] <- ifelse(length(samenstelling_gemeenteraad) > 0, samenstelling_gemeenteraad,
+        gemeentes$url_raad[i] <- ifelse(length(samenstelling_gemeenteraad) > 0, samenstelling_gemeenteraad,
                                    ifelse(length(gemeenteraad_samenstelling) > 0, gemeenteraad_samenstelling, 
                                           ifelse(length(samenstelling_raad) > 0, samenstelling_raad,
                                                  ifelse(length(Samenstelling_gemeenteraad) > 0, Samenstelling_gemeenteraad, 
                                                         ifelse(length(wie) > 0, wie, NA)))))
         
         
-        if (length(links_merge) > 0 & is.na(gemeentes$url[i])) {
+        if (length(links_merge) > 0 & is.na(gemeentes$url_raad[i])) {
           lengths <- NA
           for (j in seq_along(links_merge)) {
             lengths[j] <- length(links_merge[j] %>%
@@ -1289,7 +1285,7 @@ for (i in seq_along(gemeentes$Raad)) {
                                    html_nodes("a") %>%
                                    html_attr("href"))
           }
-          gemeentes$url[i] <- links_merge[which.max(lengths)] 
+          gemeentes$url_raad[i] <- links_merge[which.max(lengths)] 
         }
       }
     }
@@ -1353,7 +1349,7 @@ for (i in seq_along(gemeentes$ris)) {
         # links_grepl3 <- unique(unlist(links_grepl3))
         
         links_merge <- unique(c(links_grepl, links_grepl2))
-        links_merge <- links_merge[which(!grepl("whatsapp|griffie|Griffie", links_merge))]
+        links_merge <- links_merge[which(!grepl("whatsapp", links_merge))]
         years <- as.character(c(2000:(as.numeric(substr(Sys.Date(), 1, 4))-1)))
         years <- paste(years,collapse = '|')
         links_merge <- links_merge[which(!grepl(years, links_merge))]
@@ -1386,14 +1382,14 @@ for (i in seq_along(gemeentes$ris)) {
         wie <- links_merge[which(grepl("Wie_zitten_er_in_de_gemeenteraad|wie_zitten_er_in_de_gemeenteraad|wie-zitten-er-in-de-gemeenteraad|
                                      Wie-zitten-er-in-de-gemeenteraad", links_merge))]
         
-        gemeentes$url[i] <- ifelse(length(samenstelling_gemeenteraad) > 0, samenstelling_gemeenteraad,
+        gemeentes$url_ris[i] <- ifelse(length(samenstelling_gemeenteraad) > 0, samenstelling_gemeenteraad,
                                    ifelse(length(gemeenteraad_samenstelling) > 0, gemeenteraad_samenstelling, 
                                           ifelse(length(samenstelling_raad) > 0, samenstelling_raad,
                                                  ifelse(length(Samenstelling_gemeenteraad) > 0, Samenstelling_gemeenteraad, 
                                                         ifelse(length(wie) > 0, wie, NA)))))
         
         
-        if (length(links_merge) > 0 & is.na(gemeentes$url[i])) {
+        if (length(links_merge) > 0 & is.na(gemeentes$url_ris[i])) {
           lengths <- NA
           for (j in seq_along(links_merge)) {
             lengths[j] <- length(links_merge[j] %>%
@@ -1401,7 +1397,7 @@ for (i in seq_along(gemeentes$ris)) {
                                    html_nodes("a") %>%
                                    html_attr("href"))
           }
-          gemeentes$url[i] <- links_merge[which.max(lengths)] 
+          gemeentes$url_ris[i] <- links_merge[which.max(lengths)] 
         }
       }
     }
@@ -1465,7 +1461,7 @@ for (i in seq_along(gemeentes$Bestuur)) {
         # links_grepl3 <- unique(unlist(links_grepl3))
         
         links_merge <- unique(c(links_grepl, links_grepl2))
-        links_merge <- links_merge[which(!grepl("whatsapp|griffie|Griffie", links_merge))]
+        links_merge <- links_merge[which(!grepl("whatsapp", links_merge))]
         years <- as.character(c(2000:(as.numeric(substr(Sys.Date(), 1, 4))-1)))
         years <- paste(years,collapse = '|')
         links_merge <- links_merge[which(!grepl(years, links_merge))]
@@ -1498,14 +1494,14 @@ for (i in seq_along(gemeentes$Bestuur)) {
         wie <- links_merge[which(grepl("Wie_zitten_er_in_de_gemeenteraad|wie_zitten_er_in_de_gemeenteraad|wie-zitten-er-in-de-gemeenteraad|
                                      Wie-zitten-er-in-de-gemeenteraad", links_merge))]
         
-        gemeentes$url[i] <- ifelse(length(samenstelling_gemeenteraad) > 0, samenstelling_gemeenteraad,
+        gemeentes$url_bestuur[i] <- ifelse(length(samenstelling_gemeenteraad) > 0, samenstelling_gemeenteraad,
                                    ifelse(length(gemeenteraad_samenstelling) > 0, gemeenteraad_samenstelling, 
                                           ifelse(length(samenstelling_raad) > 0, samenstelling_raad,
                                                  ifelse(length(Samenstelling_gemeenteraad) > 0, Samenstelling_gemeenteraad, 
                                                         ifelse(length(wie) > 0, wie, NA)))))
         
         
-        if (length(links_merge) > 0 & is.na(gemeentes$url[i])) {
+        if (length(links_merge) > 0 & is.na(gemeentes$url_bestuur[i])) {
           lengths <- NA
           for (j in seq_along(links_merge)) {
             lengths[j] <- length(links_merge[j] %>%
@@ -1513,7 +1509,7 @@ for (i in seq_along(gemeentes$Bestuur)) {
                                    html_nodes("a") %>%
                                    html_attr("href"))
           }
-          gemeentes$url[i] <- links_merge[which.max(lengths)] 
+          gemeentes$url_bestuur[i] <- links_merge[which.max(lengths)] 
         }
       }
     }
@@ -1576,7 +1572,7 @@ for (i in seq_along(gemeentes$Bestuur)) {
 #       # links_grepl3 <- unique(unlist(links_grepl3))
 #       
 #       links_merge <- unique(c(links_grepl, links_grepl2))
-#       links_merge <- links_merge[which(!grepl("whatsapp|griffie|Griffie", links_merge))]
+#       links_merge <- links_merge[which(!grepl("whatsapp", links_merge))]
 #       years <- as.character(c(2000:(as.numeric(substr(Sys.Date(), 1, 4))-1)))
 #       years <- paste(years,collapse = '|')
 #       links_merge <- links_merge[which(!grepl(years, links_merge))]
@@ -1631,59 +1627,86 @@ for (i in seq_along(gemeentes$Bestuur)) {
 # }
 
 
-
 ## GET URLS OF ALL MEMBERS
 
-# ONE SITE WITH ALL MEMBERS
-gemeente <- gemeentes$extern_url[[50]] %>%  
-  read_html() %>% 
-  html_nodes("a") %>%
-  html_attr("href")
-gemeente_url <- gsub(".*nl", "", gemeentes$extern_url[[50]])
-
-i <- 1
-match <- character()
-for (i in seq_along(gemeente)) {
-  if (!is.na(gemeente[i])) {
-    if (nchar(gemeente_url) != nchar(gemeente[i])) {
-      match[i] <- ifelse(grepl(gemeente_url, gemeente[i]), gemeente[i], NA)
+# MAKE COLUMN THAT SHOWS IF ALL INFORMATION OF MEMBERS IS ON ONE OR MULTIPLE PAGES
+gemeentes$one_page <- NA
+for (i in seq_along(gemeentes$url)) {
+  if (!is.na(gemeentes$url[i])) {
+    if (str_count(LinkExtractor(gemeentes$url[[i]])$Info$Source_page, pattern = "mailto") > 10) {
+      gemeentes$one_page[i] <- 1
     } else {
-      match[i] <- NA
-    }
+      gemeentes$one_page[i] <- 0
+    }  
   }
 }
-if (length(which(!is.na(match))) < 10) {
-  gemeentes$extern_url[[50]] %>%  
-    read_html() %>% 
-    html_nodes("a") %>%
-    html_attr("href")
-}
-ding <- gemeentes$extern_url[[50]] %>%  
-  read_html()
 
-session_url <- html_session(gemeentes$Website[[68]])$url
-if (session_url != gemeentes$Website[[39]]) {
-  gemeentes$Website[[39]] <- session_url
-}
 
-# DIFFERENT SITES FOR ALL MEMBERS
-blaricum <- gemeentes$extern_url[[41]] %>%  
-  read_html() %>% 
-  html_nodes("a") %>%
-  html_attr("href")
-blaricum_url <- gsub(".*nl", "", gemeentes$extern_url[[41]])
-
-i <- 1
-match <- character()
-for (i in seq_along(blaricum)) {
-  if (!is.na(blaricum[i])) {
-    if (nchar(blaricum_url) != nchar(blaricum[i])) {
-      match[i] <- ifelse(grepl(blaricum_url, blaricum[i]), blaricum[i], NA)
-    } else {
-      match[i] <- NA
-    }
-  }
-}
+# gemeente <- gemeentes$url[[78]] %>%  
+#   read_html() %>% 
+#   html_nodes("a") %>%
+#   html_attr("href")
+# #gemeente_url <- gsub(".*nl", "", gemeentes$url[[114]])
+# gemeente_url <- strsplit(gemeentes$url[[140]], split = "/")[[1]][4]
+# # on different sites:
+# # 84 [80]
+# # 140 [81]
+# # 155 [1]
+# 
+# # per fraction
+# # 48 
+# # 50 [25]
+# 
+# # on same site:
+# # 74
+# # 72
+# # 68 [78]
+# # 98 [76]
+# # 88 [3]
+# # 56 [5]
+# i <- 1
+# match <- character()
+# for (i in seq_along(gemeente)) {
+#   if (!is.na(gemeente[i])) {
+#     if (nchar(gemeente_url) != nchar(gemeente[i])) {
+#       match[i] <- ifelse(grepl(gemeente_url, gemeente[i]), gemeente[i], NA)
+#     } else {
+#       match[i] <- NA
+#     }
+#   }
+# }
+# if (length(which(!is.na(match))) < 10) {
+#   gemeentes$url[[99]] %>%  
+#     read_html() %>% 
+#     html_nodes("a") %>%
+#     html_attr("href")
+# }
+# ding <- gemeentes$url[[50]] %>%  
+#   read_html()
+# 
+# session_url <- html_session(gemeentes$Website[[68]])$url
+# if (session_url != gemeentes$Website[[39]]) {
+#   gemeentes$Website[[39]] <- session_url
+# }
+# 
+# # DIFFERENT SITES FOR ALL MEMBERS
+# blaricum <- gemeentes$extern_url[[41]] %>%  
+#   read_html() %>% 
+#   html_nodes("a") %>%
+#   html_attr("href")
+# blaricum_url <- gsub(".*nl", "", gemeentes$extern_url[[41]])
+# 
+# i <- 1
+# match <- character()
+# for (i in seq_along(blaricum)) {
+#   if (!is.na(blaricum[i])) {
+#     if (nchar(blaricum_url) != nchar(blaricum[i])) {
+#       match[i] <- ifelse(grepl(blaricum_url, blaricum[i]), blaricum[i], NA)
+#     } else {
+#       match[i] <- NA
+#     }
+#   }
+# }
 
 
 # use sites to scrape information
