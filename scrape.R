@@ -561,7 +561,7 @@ for (i in seq_along(gemeentes$gemeentebestuur.)) {
 
 
 # CHECK FOR EXTERNAL WEBSITE „besluitvorming" -----------------------------
-gemeentes$besluitvorming[79] <- str_replace(gemeentes$Website[79], "www.", "besluitvorming.")
+
 gemeentes$besluitvorming <- str_replace(gemeentes$Website, "www.", "besluitvorming.")
 
 for (i in seq_along(gemeentes$besluitvorming)) {
@@ -854,7 +854,7 @@ for (i in seq_along(gemeentes$notubiz_url)) {
 # REGULAR GEMEENTE
 gemeentes$url_regular <- 0
 for (i in seq_along(gemeentes$Website)) {
-  if (is.na(gemeentes$ibabs[i]) & is.na(gemeentes$notubiz[i]) & is.na(gemeentes$url_regular[i])) {
+  if (is.na(gemeentes$ibabs[i]) & is.na(gemeentes$notubiz[i]) & is.na(gemeentes$url_regular[i]) & is.na(gemeentes$url_regular[i])) {
     if (!is.na(gemeentes$Website[i])) {
       if (tryCatch({
         LinkExtractor(gemeentes$Website[i])
@@ -1015,190 +1015,6 @@ for (i in seq_along(gemeentes$Website)) {
 
 gemeentes$url_regular[346] <- "https://www.gemeenteraadzundert.nl/contactgegevens-raadsleden/"
 
-# if (is.na(gemeentes$ibabs[202]) & is.na(gemeentes$notubiz[i]) & is.na(gemeentes$url_regular[i])) {
-#   if (!is.na(gemeentes$Website[i])) {
-#     if (tryCatch({
-#       LinkExtractor(gemeentes$Website[202])
-#       TRUE
-#     }, error=function(e) FALSE)) {
-#       
-#       links_internal <- LinkExtractor(gemeentes$Website[346])$InternalLinks
-#       links_external <- LinkExtractor(gemeentes$Website[346])$ExternalLinks
-#       links <- c(links_internal, links_external)
-#       links_sub <- sub(".*nl", "", links)
-#       links_grepl <- links[which(grepl("gemeenteraad|Gemeenteraad|samenstelling|Samenstelling|wie-is-wie|raad|Raad|organisatie|Organisatie|
-#                                        raadsleden|Raadsleden|Bestuur|bestuur|inwoners|gemeente", 
-#                                        links_sub) & !grepl("Vergaderingen|vergaderingen|verordeningen|whatsapp|RSS|rss|Nieuws|nieuws|
-#                                                            bekendmakingen|whatsapp|tel:|mailto:|regelingen|Regelingen|documenten|Documenten|
-#                                                            Burgemeester|burgemeester|advies|Advies|Notulen|notulen|Sociale|sociale|
-#                                                            vragen|brieven|actueel", links_sub))]
-#       links2 <- list()
-#       links_sub2 <- list()
-#       links_grepl2 <- list()
-#       for (t in seq_along(links_grepl)) {
-#         if (length(LinkExtractor(links_grepl[t])$InternalLinks) != 0) {
-#           links2[[t]] <- LinkExtractor(links_grepl[t])$InternalLinks
-#           links_sub2[[t]] <- gsub(".*nl", "", links2[[t]])
-#         } else {
-#           links_grepl2[[t]] <- NA
-#         }
-#       }
-#       links2 <- unlist(links2)
-#       links_sub2 <- unlist(links_sub2)
-#       links_grepl2 <- links2[which(grepl("gemeenteraad|Gemeenteraad|samenstelling|Samenstelling|wie-is-wie|raad|Raad|organisatie|Organisatie|
-#                                          raadsleden|Raadsleden|Bestuur|bestuur|inwoners", 
-#                                          links_sub2) & !grepl("Vergaderingen|vergaderingen|verordeningen|whatsapp|RSS|rss|Nieuws|nieuws|
-#                                                               bekendmakingen|whatsapp|tel:|mailto:|regelingen|Regelingen|documenten|
-#                                                               Documenten|Burgemeester|burgemeester|advies|Advies|Notulen|notulen|Sociale|sociale|
-#                                                               vragen|brieven|actueel", links_sub2))]
-#       links_grepl2 <- unique(unlist(links_grepl2))
-#       
-#       links3 <- list()
-#       links_sub3 <- list()
-#       links_grepl3 <- list()
-#       for (z in seq_along(links_grepl2)) {
-#         if (tryCatch({
-#           LinkExtractor(links_grepl2[z])$InternalLinks
-#           TRUE
-#         }, error=function(e) FALSE)) {
-#           if (length(LinkExtractor(links_grepl2[z])$InternalLinks) != 0) {
-#             links3[[z]] <- LinkExtractor(links_grepl2[z])$InternalLinks
-#             links_sub3[[z]] <- gsub(".*nl", "", links3[[z]])
-#           }
-#         } else {
-#           links_sub3[[z]] <- NA
-#         }
-#       }
-#       links3 <- unlist(links3)
-#       links_sub3 <- unlist(links_sub3)
-#       links_grepl3 <- links3[which(grepl("gemeenteraad|Gemeenteraad|samenstelling|Samenstelling|wie-is-wie|raad|Raad|organisatie|Organisatie|raadsleden|Raadsleden",
-#                                          links_sub3) & !grepl("Vergaderingen|vergaderingen|verordeningen|whatsapp|RSS|rss|Nieuws|nieuws|
-#                                                               bekendmakingen|whatsapp|tel:|mailto:|regelingen|Regelingen|documenten|Documenten|
-#                                                               Burgemeester|burgemeester|advies|Advies|Notulen|notulen|Sociale|sociale|
-#                                                               vragen|brieven|actueel", links_sub3))]
-#       links_grepl3 <- unique(unlist(links_grepl3))
-#       
-#       links4 <- list()
-#       links_sub4 <- list()
-#       links_grepl4 <- list()
-#       for (z in seq_along(links_grepl3)) {
-#         if (tryCatch({
-#           LinkExtractor(links_grepl3[z])$InternalLinks
-#           TRUE
-#         }, error=function(e) FALSE)) {
-#           if (length(LinkExtractor(links_grepl3[z])$InternalLinks) != 0) {
-#             links4[[z]] <- LinkExtractor(links_grepl3[z])$InternalLinks
-#             links_sub4[[z]] <- gsub(".*nl", "", links4[[z]])
-#           }
-#         } else {
-#           links_sub4[[z]] <- NA
-#         }
-#       }
-#       links4 <- unlist(links4)
-#       links_sub4 <- unlist(links_sub4)
-#       links_grepl4 <- links4[which(grepl("gemeenteraad|Gemeenteraad|samenstelling|Samenstelling|wie-is-wie|raad|Raad|organisatie|Organisatie|raadsleden|Raadsleden",
-#                                          links_sub4) & !grepl("Vergaderingen|vergaderingen|verordeningen|whatsapp|RSS|rss|Nieuws|nieuws|
-#                                                               bekendmakingen|whatsapp|tel:|mailto:|regelingen|Regelingen|documenten|Documenten|
-#                                                               Burgemeester|burgemeester|advies|Advies|Notulen|notulen|Sociale|sociale|
-#                                                               vragen|brieven|actueel", links_sub4))]
-#       links_grepl4 <- unique(unlist(links_grepl4))
-#       
-#       links_merge <- unique(c(links_grepl, links_grepl2, links_grepl3, links_grepl4))
-#       links_merge <- links_merge[which(!grepl("Vergaderingen|vergaderingen|verordeningen|whatsapp|RSS|rss|Nieuws|nieuws|
-#                                               bekendmakingen|whatsapp|tel:|mailto:|regelingen|Regelingen|documenten|Documenten|
-#                                               Burgemeester|burgemeester|advies|Advies|Notulen|notulen|Sociale|sociale|inwoners|Inwoners|vragen|actueel", links_merge))]
-#       
-#       for (c in seq_along(links_merge)) {
-#         if (tryCatch({
-#           links_merge[c] %>%
-#             read_html()
-#           FALSE
-#         }, error=function(e) TRUE)) {
-#           links_merge[c] <- NA
-#         } 
-#       }
-#       links_merge <- na.omit(links_merge)
-#       
-#       samenstelling_gemeenteraad <- links_merge[which(grepl("samenstelling-gemeenteraad", links_merge))]
-#       gemeenteraad_samenstelling <- links_merge[which(grepl("gemeenteraad-samenstelling", links_merge))]
-#       samenstelling_raad <- links_merge[which(grepl("samenstelling-raad", links_merge))]
-#       Samenstelling_gemeenteraad <- links_merge[which(grepl("Samenstelling_gemeenteraad|samenstelling_gemeenteraad|samenstelling-van-de-gemeenteraad", links_merge))]
-#       wie <- links_merge[which(grepl("Wie_zitten_er_in_de_gemeenteraad|wie_zitten_er_in_de_gemeenteraad|wie-zitten-er-in-de-gemeenteraad|
-#                                      Wie-zitten-er-in-de-gemeenteraad|wie-zit-er-in-de-raad|Wie-zit-er-in-de-raad", links_merge))]
-#       
-#       gemeentes$url_regular[346] <- ifelse(length(samenstelling_gemeenteraad) > 0, samenstelling_gemeenteraad,
-#                                          ifelse(length(gemeenteraad_samenstelling) > 0, gemeenteraad_samenstelling, 
-#                                                 ifelse(length(samenstelling_raad) > 0, samenstelling_raad,
-#                                                        ifelse(length(Samenstelling_gemeenteraad) > 0, Samenstelling_gemeenteraad, 
-#                                                               ifelse(length(wie) > 0, wie, NA)))))
-#       
-#       if (length(links_merge) > 0 & is.na(gemeentes$url_regular[346])) {
-#         lengths <- NA
-#         for (j in seq_along(links_merge)) {
-#           lengths[j] <- length(links_merge[j] %>%
-#                                  read_html() %>%
-#                                  html_nodes("a") %>%
-#                                  html_attr("href"))
-#         }
-#         gemeentes$url_regular[346] <- links_merge[which.max(lengths)] 
-#       }
-#     } else {
-#       gemeentes$url_regular[346] <- NA
-#     }
-#   } else {
-#     gemeentes$url_regular[i] <- NA
-#   }
-# } else {
-#   gemeentes$url_regular[i] <- NA
-# }
-
-# Neder-Betuwe was laatste
-!grepl("Vergaderingen|vergaderingen|verordeningen|whatsapp|RSS|rss|Nieuws|nieuws|
-       bekendmakingen|whatsapp|tel:|mailto:|regelingen|Regelingen|documenten|Documenten|
-       Burgemeester|burgemeester|brieven|Brieven|advies|Advies|Notulen|notulen|Sociale|sociale|
-       inwoners|Inwoners|fragmenten|vergunning|vragen|brieven|actueel|gast", links_sub)
-grepl("gemeenteraad|Gemeenteraad|samenstelling|Samenstelling|wie-is-wie|raad|Raad|organisatie|Organisatie|
-      raadsleden|Raadsleden|Bestuur|bestuur|inwoners|raadslid|Raadslid", 
-      links_sub)
-grepl("Wie_zitten_er_in_de_gemeenteraad|wie_zitten_er_in_de_gemeenteraad|wie-zitten-er-in-de-gemeenteraad|
-      Wie-zitten-er-in-de-gemeenteraad|wie-zit-er-in-de-raad|Wie-zit-er-in-de-raad|gemeente", links_merge)
-links_grepl3 <- unique(unlist(links_grepl3))
-
-links4 <- list()
-links_sub4 <- list()
-links_grepl4 <- list()
-for (z in seq_along(links_grepl3)) {
-  if (tryCatch({
-    LinkExtractor(links_grepl3[z])$InternalLinks
-    TRUE
-  }, error=function(e) FALSE)) {
-    if (length(LinkExtractor(links_grepl3[z])$InternalLinks) != 0) {
-      links4[[z]] <- LinkExtractor(links_grepl3[z])$InternalLinks
-      links_sub4[[z]] <- gsub(".*nl", "", links4[[z]])
-    }
-  } else {
-    links_sub4[[z]] <- NA
-  }
-}
-links4 <- unlist(links4)
-links_sub4 <- unlist(links_sub4)
-links_grepl4 <- links4[which(grepl("gemeenteraad|Gemeenteraad|samenstelling|Samenstelling|wie-is-wie|raad|Raad|
-                                   organisatie|Organisatie|raadsleden|Raadsleden|Bestuur|bestuur|inwoners|
-                                   raadslid|Raadslid|gemeente",
-                                   links_sub4) & 
-                               !grepl("Vergaderingen|vergaderingen|verordeningen|whatsapp|RSS|rss|Nieuws|nieuws|
-                                      bekendmakingen|whatsapp|tel:|mailto:|regelingen|Regelingen|documenten|
-                                      Documenten|Burgemeester|burgemeester|brieven|Brieven|advies|Advies|Notulen|
-                                      notulen|Sociale|sociale|inwoners|Inwoners|fragmenten|vergunning|vragen|
-                                      brieven|actueel|gast", links_sub4))]
-links_grepl4 <- unique(unlist(links_grepl4))
-
-links_merge <- unique(c(links_grepl, links_grepl2, links_grepl3, links_grepl4))
-links_merge <- links_merge[which(!grepl("Vergaderingen|vergaderingen|verordeningen|whatsapp|RSS|rss|Nieuws|nieuws|
-                                        bekendmakingen|whatsapp|tel:|mailto:|regelingen|Regelingen|documenten|
-                                        Documenten|Burgemeester|burgemeester|brieven|Brieven|advies|Advies|Notulen|
-                                        notulen|Sociale|sociale|inwoners|Inwoners|fragmenten|vergunning|vragen|
-                                        brieven|actueel|gast", links_merge))]
 
 # GEMEENTERAAD.
 gemeentes$url_gemeenteraad. <- 0
@@ -1995,6 +1811,56 @@ for (i in seq_along(gemeentes$Gemeente)) {
   }
 }
 
+## use above to actually filter on something if there are multpiple possiblities
+# take double municipalities and use all "a"'s and check if e.g. e-mail %in% the urls
+
+for (i in seq_along(gemeentes$Gemeente)) {
+  multiple <- numeric()
+  if (length(which(c(!is.na(gemeentes$url_regular[337]),
+                     !is.na(gemeentes$url_gemeenteraad[337]),
+                     !is.na(gemeentes$url_gemeenteraad.[337]),
+                     !is.na(gemeentes$url_raad[337]),
+                     !is.na(gemeentes$url_bestuur[337]),
+                     !is.na(gemeentes$url_ris[337])))) > 1) {
+    for (j in (which(c(!is.na(gemeentes$url_regular[337]),
+                       !is.na(gemeentes$url_gemeenteraad[337]),
+                       !is.na(gemeentes$url_gemeenteraad.[337]),
+                       !is.na(gemeentes$url_raad[337]),
+                       !is.na(gemeentes$url_bestuur[337]),
+                       !is.na(gemeentes$url_ris[337]))))) {
+      multiple[j] <- all[[j]][337]
+    }
+    multiple <- multiple[which(!is.na(multiple))]
+    if (length(unique(multiple)) > 1) {
+      print(gemeentes$Gemeente[337])
+      #gemeentes$use_url[45] <- multiple[1] # hier wird entschieden, dass random der erste genommen wird
+      for (t in seq_along(na.omit(unique(multiple)))) {
+        multiple[[3]] %>%
+          read_html() %>% 
+          html_node("a") %>%
+          html_text()
+      }
+    } else {
+      gemeentes$use_url[45] <- unique(multiple)
+    }
+  } 
+  # if just one website:
+  if (length(which(c(!is.na(gemeentes$url_regular[45]),
+                     !is.na(gemeentes$url_gemeenteraad[45]),
+                     !is.na(gemeentes$url_gemeenteraad.[45]),
+                     !is.na(gemeentes$url_raad[45]),
+                     !is.na(gemeentes$url_bestuur[45]),
+                     !is.na(gemeentes$url_ris[45])))) == 1) {
+    gemeentes$use_url[i] <- all[[which(c(!is.na(gemeentes$url_regular[45]),
+                                         !is.na(gemeentes$url_gemeenteraad[45]),
+                                         !is.na(gemeentes$url_gemeenteraad.[45]),
+                                         !is.na(gemeentes$url_raad[45]),
+                                         !is.na(gemeentes$url_bestuur[45]),
+                                         !is.na(gemeentes$url_ris[45])))]][45]
+  } else {
+    gemeentes$use_url[45] <- NA
+  }
+}
 
 
 
@@ -2396,6 +2262,54 @@ for (i in seq_along(gemeentes$url_regular)) {
     } 
   }
 }
+
+# Neder-Betuwe was laatste
+!grepl("Vergaderingen|vergaderingen|verordeningen|whatsapp|RSS|rss|Nieuws|nieuws|
+       bekendmakingen|whatsapp|tel:|mailto:|regelingen|Regelingen|documenten|Documenten|
+       Burgemeester|burgemeester|brieven|Brieven|advies|Advies|Notulen|notulen|Sociale|sociale|
+       inwoners|Inwoners|fragmenten|vergunning|vragen|brieven|actueel|gast", links_sub)
+grepl("gemeenteraad|Gemeenteraad|samenstelling|Samenstelling|wie-is-wie|raad|Raad|organisatie|Organisatie|
+      raadsleden|Raadsleden|Bestuur|bestuur|inwoners|raadslid|Raadslid", 
+      links_sub)
+grepl("Wie_zitten_er_in_de_gemeenteraad|wie_zitten_er_in_de_gemeenteraad|wie-zitten-er-in-de-gemeenteraad|
+      Wie-zitten-er-in-de-gemeenteraad|wie-zit-er-in-de-raad|Wie-zit-er-in-de-raad|gemeente", links_merge)
+links_grepl3 <- unique(unlist(links_grepl3))
+
+links4 <- list()
+links_sub4 <- list()
+links_grepl4 <- list()
+for (z in seq_along(links_grepl3)) {
+  if (tryCatch({
+    LinkExtractor(links_grepl3[z])$InternalLinks
+    TRUE
+  }, error=function(e) FALSE)) {
+    if (length(LinkExtractor(links_grepl3[z])$InternalLinks) != 0) {
+      links4[[z]] <- LinkExtractor(links_grepl3[z])$InternalLinks
+      links_sub4[[z]] <- gsub(".*nl", "", links4[[z]])
+    }
+  } else {
+    links_sub4[[z]] <- NA
+  }
+}
+links4 <- unlist(links4)
+links_sub4 <- unlist(links_sub4)
+links_grepl4 <- links4[which(grepl("gemeenteraad|Gemeenteraad|samenstelling|Samenstelling|wie-is-wie|raad|Raad|
+                                   organisatie|Organisatie|raadsleden|Raadsleden|Bestuur|bestuur|inwoners|
+                                   raadslid|Raadslid|gemeente",
+                                   links_sub4) & 
+                               !grepl("Vergaderingen|vergaderingen|verordeningen|whatsapp|RSS|rss|Nieuws|nieuws|
+                                      bekendmakingen|whatsapp|tel:|mailto:|regelingen|Regelingen|documenten|
+                                      Documenten|Burgemeester|burgemeester|brieven|Brieven|advies|Advies|Notulen|
+                                      notulen|Sociale|sociale|inwoners|Inwoners|fragmenten|vergunning|vragen|
+                                      brieven|actueel|gast", links_sub4))]
+links_grepl4 <- unique(unlist(links_grepl4))
+
+links_merge <- unique(c(links_grepl, links_grepl2, links_grepl3, links_grepl4))
+links_merge <- links_merge[which(!grepl("Vergaderingen|vergaderingen|verordeningen|whatsapp|RSS|rss|Nieuws|nieuws|
+                                        bekendmakingen|whatsapp|tel:|mailto:|regelingen|Regelingen|documenten|
+                                        Documenten|Burgemeester|burgemeester|brieven|Brieven|advies|Advies|Notulen|
+                                        notulen|Sociale|sociale|inwoners|Inwoners|fragmenten|vergunning|vragen|
+                                        brieven|actueel|gast", links_merge))]
 
 
 # TO DO -------------------------------------------------------------------
